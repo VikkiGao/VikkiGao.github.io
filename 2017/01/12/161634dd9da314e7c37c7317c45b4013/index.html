@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  
+  <title>Hexo</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+  <meta name="description" content="OC动态特性之 — KVC、KVO
+&amp;lt;blockquote&amp;gt;&amp;lt;p&amp;gt;由于Objective-C是基于Smalltalk进行设计的，所以它具有动态加载、动态绑定等特性。Key-value coding (KVC) 和 key-value observing (KVO) 是两种能让我们驾驭 Objective-C 动态特性并简化代码的机制。&amp;lt;/p&amp;gt;&amp;lt;/block">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Hexo">
+<meta property="og:url" content="http://yoursite.com/2017/01/12/161634dd9da314e7c37c7317c45b4013/index.html">
+<meta property="og:site_name" content="Hexo">
+<meta property="og:description" content="OC动态特性之 — KVC、KVO
+&amp;lt;blockquote&amp;gt;&amp;lt;p&amp;gt;由于Objective-C是基于Smalltalk进行设计的，所以它具有动态加载、动态绑定等特性。Key-value coding (KVC) 和 key-value observing (KVO) 是两种能让我们驾驭 Objective-C 动态特性并简化代码的机制。&amp;lt;/p&amp;gt;&amp;lt;/block">
+<meta property="og:updated_time" content="2017-01-12T13:28:59.759Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="Hexo">
+<meta name="twitter:description" content="OC动态特性之 — KVC、KVO
+&amp;lt;blockquote&amp;gt;&amp;lt;p&amp;gt;由于Objective-C是基于Smalltalk进行设计的，所以它具有动态加载、动态绑定等特性。Key-value coding (KVC) 和 key-value observing (KVO) 是两种能让我们驾驭 Objective-C 动态特性并简化代码的机制。&amp;lt;/p&amp;gt;&amp;lt;/block">
+  
+    <link rel="alternate" href="/atom.xml" title="Hexo" type="application/atom+xml">
+  
+  
+    <link rel="icon" href="/favicon.png">
+  
+  
+    <link href="//fonts.googleapis.com/css?family=Source+Code+Pro" rel="stylesheet" type="text/css">
+  
+  <link rel="stylesheet" href="/css/style.css">
+  
+
+</head>
+
+<body>
+  <div id="container">
+    <div id="wrap">
+      <header id="header">
+  <div id="banner"></div>
+  <div id="header-outer" class="outer">
+    <div id="header-title" class="inner">
+      <h1 id="logo-wrap">
+        <a href="/" id="logo">Hexo</a>
+      </h1>
+      
+    </div>
+    <div id="header-inner" class="inner">
+      <nav id="main-nav">
+        <a id="main-nav-toggle" class="nav-icon"></a>
+        
+          <a class="main-nav-link" href="/">Home</a>
+        
+          <a class="main-nav-link" href="/archives">Archives</a>
+        
+      </nav>
+      <nav id="sub-nav">
+        
+          <a id="nav-rss-link" class="nav-icon" href="/atom.xml" title="RSS Feed"></a>
+        
+        <a id="nav-search-btn" class="nav-icon" title="Search"></a>
+      </nav>
+      <div id="search-form-wrap">
+        <form action="//google.com/search" method="get" accept-charset="UTF-8" class="search-form"><input type="search" name="q" results="0" class="search-form-input" placeholder="Search"><button type="submit" class="search-form-submit">&#xF002;</button><input type="hidden" name="sitesearch" value="http://yoursite.com"></form>
+      </div>
+    </div>
+  </div>
+</header>
+      <div class="outer">
+        <section id="main"><article id="post-161634dd9da314e7c37c7317c45b4013" class="article article-type-post" itemscope itemprop="blogPost">
+  <div class="article-meta">
+    <a href="/2017/01/12/161634dd9da314e7c37c7317c45b4013/" class="article-date">
+  <time datetime="2017-01-12T13:30:16.096Z" itemprop="datePublished">2017-01-12</time>
+</a>
+    
+  </div>
+  <div class="article-inner">
+    
+    
+    <div class="article-entry" itemprop="articleBody">
+      
+        <p>OC动态特性之 — KVC、KVO</p>
+<pre><code>&lt;blockquote&gt;&lt;p&gt;由于Objective-C是基于Smalltalk进行设计的，所以它具有动态加载、动态绑定等特性。Key-value coding (KVC) 和 key-value observing (KVO) 是两种能让我们驾驭 Objective-C 动态特性并简化代码的机制。&lt;/p&gt;&lt;/blockquote&gt;
+</code></pre><p></p><h2>1.KVC</h2><p></p>
+<p>在ObjC的编程中，我们习惯于通过属性的set和get方法来对属性的值进行读写，其实由于ObjC的语言特性，你根本不必进行任何操作就可以进行属性的动态读写，这种方式就是Key Value Coding（简称KVC）。</p><br><p>KVC的操作方法由NSKeyValueCoding协议提供，而NSObject就实现了这个协议，也就是说ObjC中几乎所有的对象都支持KVC操作，常用的KVC操作方法如下：</p><br><ul><br><li>写方法：<strong>setValue:属性值 forKey:属性名</strong><span style="color: #404040">（用于简单路径）</span>、<strong>setValue:属性值 forKeyPath:属性路径</strong>（用于复合路径，例如Person有一个Account类型的属性，那么person.account就是一个复合属性）</li><br><li>读方法：<strong>valueForKey:属性名 </strong>（简单路径）、<strong>valueForKeyPath:属性名</strong>（复合路径）</li><br></ul><br><p>示例代码：</p><br><p>Book.h</p><br><pre class="prettyprint linenums">#import &lt;Foundation/Foundation.h&gt;<br><br>@interface Book : NSObject {<br>    // price属性<br>    double _price;<br>}<br><br>@end<br><br></pre><br><p>Book.m</p><br><pre class="prettyprint linenums">#import &#34;Book.h&#34;<br><br>@implementation Book<br><br>@end<br></pre><br><p>Person.h</p><br><pre class="prettyprint linenums">#import &lt;Foundation/Foundation.h&gt;<br><br>// 声明Book类<br>@class Book;<br><br>#pragma 属性：无set和get方法<br>@interface Person : NSObject {<br>    int _age;<br>    Book <em>_book;<br>}<br>#pragma 属性：有set和get方法<br>@property (nonatomic, copy) NSString </em>name;<br>@property (nonatomic, assign) float height;<br><br>@end<br></pre><br><p>Person.m</p><br><pre class="prettyprint linenums">#import &#34;Person.h&#34;<br><br>@implementation Person<br><br>@end<br></pre><br><p>main.m</p><br><pre class="prettyprint linenums">#import &lt;Foundation/Foundation.h&gt;<br>#import &#34;Person.h&#34;<br>#import &#34;Book.h&#34;<br><br>int main(int argc, const char <em> argv[]) {<br>    @autoreleasepool {<br><br>        Person </em>person = [[Person alloc] init];<br>        Book <em>book = [[Book alloc] init];<br>        // setValue:forKey: 方法设置简单属性的值，value值必须是OC对象<br>        [person setValue:@18 forKey:@&#34;_age&#34;];<br>        [person setValue:@1.7 forKey:@&#34;height&#34;];<br>        [person setValue:@&#34;jack&#34; forKey:@&#34;name&#34;];<br>        [person setValue:book forKey:@&#34;_book&#34;];<br>        // setValue:forKeyPath: 方法设置复合属性的值<br>        [person setValue:@25.8 forKeyPath:@&#34;book.price&#34;];<br><br>        // valueForKey: 方法获取简单属性的值<br>        int age = [[person valueForKey:@&#34;age&#34;] intValue];<br>        float height = person.height;<br>        NSString </em>name = [person valueForKey:@&#34;_name&#34;];<br>        // valueForKeyPath: 方法获取复合属性的值<br>        double bookPrice = [[person valueForKeyPath:@&#34;_book.<em>price&#34;] doubleValue];<br>        NSLog(@&#34;age = %d&#34;, age);<br>        NSLog(@&#34;height = %f&#34;, height);<br>        NSLog(@&#34;name = %@&#34;, name);<br>        NSLog(@&#34;bookPrice = %f&#34;, bookPrice);<br>    }<br>    return 0;<br>}<br></em></pre><br><p><a href="/web/20160515030554/http://7xow65.com1.z0.glb.clouddn.com/wp-content/uploads/2016/03/QQ20160303-01.png">&lt;img class=”alignnone size-full wp-image-2308” src=”/web/20160515030554im/http://7xow65.com1.z0.glb.clouddn.com/wp-content/uploads/2016/03/QQ20160303-01.png” alt=”QQ20160303-0” width=”512” height=”57”/&gt;</a></p><br><p> </p><br><p><strong>小结：</strong></p><br><ul><br><li>如果是动态设置属性，以上文 age 属性为例，会优先考虑调用 setAge: 方法，如果没有该方法则优先考虑搜索成员变量 _age，如果仍然不存在则搜索成员变量 age，如果最后仍然没搜索到则会调用这个类的setValue:forUndefinedKey：方法(注意搜索过程中不管这些方法、成员变量是私有的还是公共的都能正确设置)，所以key值加不加下划线都是可以的。</li><br><li>如果是动态读取属性，则优先考虑调用 age 方法（属性age的getter方法），如果没有搜索到则会优先搜索成员变量 <em>age，如果仍然不存在则搜索成员变量 age，如果最后仍然没搜索到则会调用这个类的valueforUndefinedKey:方法(注意搜索过程中不管这些方法、成员变量是私有的还是公共的都能正确读取)，所以key值加不加下划线都是可以的。</em></li><br></ul><br><div style="width: 640px; " class="wp-video"><!--[if lt IE 9]><script>document.createElement('video');</script><![endif]--><br><video class="wp-video-shortcode" id="video-2300-1" width="640" height="360" preload="metadata" controls="controls">&lt;source type=”video/mp4” src=”<a href="http://7xow58.media1.z0.glb.clouddn.com/56%2FKVC1.mp4?" target="_blank" rel="external">http://7xow58.media1.z0.glb.clouddn.com/56%2FKVC1.mp4?</a>=1”/&gt;<a href="/web/20160515030554/http://7xow58.media1.z0.glb.clouddn.com/56%2FKVC1.mp4">http://7xow58.media1.z0.glb.clouddn.com/56%2FKVC1.mp4</a></video></div><br><h2> 2.KVO</h2><br><p>在如今比较流行的MVVM设计模式中，需要有一种双向绑定的机制，在数据模型发生了修改之后立即将改变呈现到UI视图上去。OC中原生的就支持这么一种机制，那就是Key Value Observing（简称KVO）。KVO其实是一种观察者模式，利用它可以很容易实现视图组件和数据模型的分离，当数据模型的属性值改变之后作为监听器的视图组件就会被激发，激发时就会回调监听器自身。在ObjC中要实现KVO则必须实现NSKeyValueObServing协议，不过幸运的是NSObject已经实现了该协议，因此几乎所有的ObjC对象都可以使用KVO。</p><br><p>在ObjC中使用KVO操作常用的方法如下：</p><br><ul><br><li>注册指定Key路径的监听器： <strong>addObserver: forKeyPath: options:  context:</strong></li><br><li>删除指定Key路径的监听器： <strong>removeObserver: forKeyPath、removeObserver: forKeyPath: context:</strong></li><br><li>回调监听： <strong>observeValueForKeyPath: ofObject: change: context:</strong></li><br></ul><br><p>KVO的使用步骤也比较简单：</p><br><ol><br><li>通过addObserver: forKeyPath: options: context:为被监听对象（它通常是数据模型）注册监听器</li><br><li>重写监听器的observeValueForKeyPath: ofObject: change: context:方法</li><br></ol><br><p>这里我们还是在上面的例子基础上继续扩展，我们为 person 对象添加一个监听者 observer。当我们的 person 对象的 height 属性值变动之后我们希望 observer 可以及时获得通知。</p><br><p>为了认识KVO能监听对象属性值的哪几种方式的变化，我们自己实现一个方法来改变本身属性的值，那么在Person类中做一些改变，添加一个changValue方法：</p><br><pre class="prettyprint linenums">- (void)changeValue {<br>    _height += 0.1;<br>    NSLog(@&#34;—– 自己实现的方法改变height的值 ——&#34;);<br>    NSLog(@&#34;height = %f&#34;, <em>height);<br>}<br></em></pre><br><p>创建一个Observer类：</p><br><p>Observer.h</p><br><pre class="prettyprint linenums">#import &lt;Foundation/Foundation.h&gt;<br><br>@interface Observer : NSObject<br><br>@property (nonatomic, copy) NSString <em>name;<br><br>@end<br></em></pre><br><p>Observer.m</p><br><pre class="prettyprint linenums">#import &#34;Observer.h&#34;<br><br>@implementation Observer<br><br>// 这个方法在对象的监听属性发生改变时，会自动调用。监听者对属性发生的改变做出什么反应也体现在这里。<br>- (void)observeValueForKeyPath:(NSString )keyPath ofObject:(id)object change:(NSDictionary <em>)change context:(void </em>)context {<br>    NSLog(@&#34;—— %@ 在监听 ——&#34;, self.name);<br>    NSLog(@&#34;keyPath: %@&#34;, keyPath);<br>    NSLog(@&#34;object: %@&#34;, [object valueForKey:@&#34;name&#34;]);<br>    NSLog(@&#34;change: %@&#34;, change);<br>    NSLog(@&#34;context: %@&#34;, context);<br>}<br><br>@end<br></pre><br><p>main.m</p><br><pre class="prettyprint linenums">#import &lt;Foundation/Foundation.h&gt;<br>#import &#34;Person.h&#34;<br>#import &#34;Observer.h&#34;<br><br>int main(int argc, const char <em> argv[]) {<br>    @autoreleasepool {<br><br>        // 创建一个person对象，设置两个属性值<br>        Person </em>person = [[Person alloc] init];<br>        person.height = 1.7;<br>        person.name = @&#34;jack&#34;;<br><br>        // 创建一个observer对象，设置一个name属性的值<br>        Observer <em>observer = [[Observer alloc] init];<br>        observer.name = @&#34;observer&#34;;<br><br>        // 为person对象注册一个监听者<br>        /**
+         </em>  第1个参数：谁来监听<br>         <em>  第2个参数：监听哪一个属性
+         </em>  第3个参数：属性发生了什么变化<br>         <em>  第4个参数：额外传入的参数
+         </em>/<br>        [person addObserver:observer forKeyPath:@&#34;height&#34; options:NSKeyValueObservingOptionNew | NSKeyValueObservingOptionOld context:@&#34;这里可以传入一些东西…&#34;];<br><br>        // 通过setter方法改变被监听的属性的值<br>        person.height = 1.8;<br>        // 通过KVC方法改变被监听的属性的值<br>        [person setValue:@1.9 forKey:@&#34;height&#34;];<br>        // 通过自己实现的changeValue方法改变被监听的属性的值<br>        [person changeValue];<br><br>        // 移除监听（在新版本编译器中，必须配对调用监听和移除监听的方法，否则程序会崩溃）<br>        /<em>*
+         </em>  第1个参数: 要移除哪个监听者<br>         <em>  第2个参数: 监听的是哪个属性
+         </em>/<br>        [person removeObserver:observer forKeyPath:@&#34;height&#34;];<br>    }<br>    return 0;<br>}<br></pre><br><p><a href="/web/20160515030554/http://7xow65.com1.z0.glb.clouddn.com/wp-content/uploads/2016/03/QQ20160307-1.png">&lt;img class=”alignnone size-full wp-image-2342” src=”/web/20160515030554im/http://7xow65.com1.z0.glb.clouddn.com/wp-content/uploads/2016/03/QQ20160307-1.png” alt=”QQ20160307-1” width=”976” height=”442”/&gt;</a></p><br><p>从上面的运行结果来看，只有通过setter或KVC修改的属性值，才会调用observeValueForKeyPath:方法，通过其他方式修改属性值并不能通知监听者，这里需要注意。</p><br><div style="width: 640px; " class="wp-video"><video class="wp-video-shortcode" id="video-2300-2" width="640" height="360" preload="metadata" controls="controls"><source type="video/mp4" src="http://7xow58.media1.z0.glb.clouddn.com/56%2FKVC2.mp4?_=2"><a href="/web/20160515030554/http://7xow58.media1.z0.glb.clouddn.com/56%2FKVC2.mp4">http://7xow58.media1.z0.glb.clouddn.com/56%2FKVC2.mp4</a></video></div><br><p>转载请注明：<a href="/web/20160515030554/http://www.hcios.com/">宏创学院</a> » <a href="/web/20160515030554/http://www.hcios.com/archives/2300">OC动态特性之 — KVC、KVO</a></p>
+
+
+<div class="article-social"><br>            <a href="javascript:;" data-action="ding" data-id="2300" id="Addlike" class="action" target="_blank" rel="external"><i class="fa fa-heart-o"></i>喜欢 (<span class="count">9</span>)</a><span class="or">or</span><span class="action action-share bdsharebuttonbox"><i class="fa fa-share-alt"></i>分享 (<span class="bds_count" data-cmd="count" title="累计分享0次">0</span>)<div class="action-popover"><div class="popover top in"><div class="arrow"></div><div class="popover-content"><a href="#" class="sinaweibo fa fa-weibo" data-cmd="tsina" title="分享到新浪微博"></a><a href="#" class="bds_qzone fa fa-star" data-cmd="qzone" title="分享到QQ空间"></a><a href="#" class="tencentweibo fa fa-tencent-weibo" data-cmd="tqq" title="分享到腾讯微博"></a><a href="#" class="qq fa fa-qq" data-cmd="sqq" title="分享到QQ好友"></a><a href="#" class="bds_renren fa fa-renren" data-cmd="renren" title="分享到人人网"></a><a href="#" class="bds_weixin fa fa-weixin" data-cmd="weixin" title="分享到微信"></a><a href="#" class="bds_more fa fa-ellipsis-h" data-cmd="more"></a></div></div></div></span><br></div>
+
+      
+    </div>
+    <footer class="article-footer">
+      <a data-url="http://yoursite.com/2017/01/12/161634dd9da314e7c37c7317c45b4013/" data-id="cixuey47x000102pjo083quck" class="article-share-link">Share</a>
+      
+      
+    </footer>
+  </div>
+  
+    
+<nav id="article-nav">
+  
+    <a href="/2017/01/12/2b0c0adf04623ed3b39ea4bfe7b8c9d7/" id="article-nav-newer" class="article-nav-link-wrap">
+      <strong class="article-nav-caption">Newer</strong>
+      <div class="article-nav-title">
+        
+          (no title)
+        
+      </div>
+    </a>
+  
+  
+    <a href="/2017/01/12/2ae054aff1e0d89462af2873de7a57b2/" id="article-nav-older" class="article-nav-link-wrap">
+      <strong class="article-nav-caption">Older</strong>
+      <div class="article-nav-title"></div>
+    </a>
+  
+</nav>
+
+  
+</article>
+
+</section>
+        
+          <aside id="sidebar">
+  
+    
+
+  
+    
+
+  
+    
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">Archives</h3>
+    <div class="widget">
+      <ul class="archive-list"><li class="archive-list-item"><a class="archive-list-link" href="/archives/2017/01/">January 2017</a></li></ul>
+    </div>
+  </div>
+
+
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">Recent Posts</h3>
+    <div class="widget">
+      <ul>
+        
+          <li>
+            <a href="/2017/01/12/4cb0e039f4e017d4e3e661b1d77e1b48/">(no title)</a>
+          </li>
+        
+          <li>
+            <a href="/2017/01/12/8bfb072940487158c8e60e0dce2e8e31/">(no title)</a>
+          </li>
+        
+          <li>
+            <a href="/2017/01/12/35c26a35a939b610c9591c35c26b7fee/">(no title)</a>
+          </li>
+        
+          <li>
+            <a href="/2017/01/12/36022e1db3604f58a061909408107fdc/">(no title)</a>
+          </li>
+        
+          <li>
+            <a href="/2017/01/12/3e567ee8594e7381ae58a5e6731d3272/">(no title)</a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+
+  
+</aside>
+        
+      </div>
+      <footer id="footer">
+  
+  <div class="outer">
+    <div id="footer-info" class="inner">
+      &copy; 2017 John Doe<br>
+      Powered by <a href="http://hexo.io/" target="_blank">Hexo</a>
+    </div>
+  </div>
+</footer>
+    </div>
+    <nav id="mobile-nav">
+  
+    <a href="/" class="mobile-nav-link">Home</a>
+  
+    <a href="/archives" class="mobile-nav-link">Archives</a>
+  
+</nav>
+    
+
+<script src="//ajax.googleapis.com/ajax/libs/jquery/2.0.3/jquery.min.js"></script>
+
+
+  <link rel="stylesheet" href="/fancybox/jquery.fancybox.css">
+  <script src="/fancybox/jquery.fancybox.pack.js"></script>
+
+
+<script src="/js/script.js"></script>
+
+  </div>
+</body>
+</html>

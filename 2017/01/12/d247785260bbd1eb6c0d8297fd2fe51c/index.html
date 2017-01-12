@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  
+  <title>Hexo</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+  <meta name="description" content="UIView详解之十：控件改变坐标系（convertRect:）
+&amp;lt;blockquote&amp;gt;&amp;lt;p&amp;gt;由于UI控件的Frame属性都是依据该控件的父控件原点作为坐标系原点（0，0）的，所以，当父控件不是控制器view时，无法根据UI控件的frame来获取其相对于控制器view的位置。在实际开发中，为了获取某个子控件相对于屏幕顶部/底部/左边/右边的实际距离，必须要去改变子控件的坐">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Hexo">
+<meta property="og:url" content="http://yoursite.com/2017/01/12/d247785260bbd1eb6c0d8297fd2fe51c/index.html">
+<meta property="og:site_name" content="Hexo">
+<meta property="og:description" content="UIView详解之十：控件改变坐标系（convertRect:）
+&amp;lt;blockquote&amp;gt;&amp;lt;p&amp;gt;由于UI控件的Frame属性都是依据该控件的父控件原点作为坐标系原点（0，0）的，所以，当父控件不是控制器view时，无法根据UI控件的frame来获取其相对于控制器view的位置。在实际开发中，为了获取某个子控件相对于屏幕顶部/底部/左边/右边的实际距离，必须要去改变子控件的坐">
+<meta property="og:image" content="http://yoursite.com/web/20160317213628im_/http://7xow65.com1.z0.glb.clouddn.com/wp-content/uploads/2015/11/IMG_0113-169x300.png">
+<meta property="og:updated_time" content="2017-01-12T13:28:59.760Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="Hexo">
+<meta name="twitter:description" content="UIView详解之十：控件改变坐标系（convertRect:）
+&amp;lt;blockquote&amp;gt;&amp;lt;p&amp;gt;由于UI控件的Frame属性都是依据该控件的父控件原点作为坐标系原点（0，0）的，所以，当父控件不是控制器view时，无法根据UI控件的frame来获取其相对于控制器view的位置。在实际开发中，为了获取某个子控件相对于屏幕顶部/底部/左边/右边的实际距离，必须要去改变子控件的坐">
+<meta name="twitter:image" content="http://yoursite.com/web/20160317213628im_/http://7xow65.com1.z0.glb.clouddn.com/wp-content/uploads/2015/11/IMG_0113-169x300.png">
+  
+    <link rel="alternate" href="/atom.xml" title="Hexo" type="application/atom+xml">
+  
+  
+    <link rel="icon" href="/favicon.png">
+  
+  
+    <link href="//fonts.googleapis.com/css?family=Source+Code+Pro" rel="stylesheet" type="text/css">
+  
+  <link rel="stylesheet" href="/css/style.css">
+  
+
+</head>
+
+<body>
+  <div id="container">
+    <div id="wrap">
+      <header id="header">
+  <div id="banner"></div>
+  <div id="header-outer" class="outer">
+    <div id="header-title" class="inner">
+      <h1 id="logo-wrap">
+        <a href="/" id="logo">Hexo</a>
+      </h1>
+      
+    </div>
+    <div id="header-inner" class="inner">
+      <nav id="main-nav">
+        <a id="main-nav-toggle" class="nav-icon"></a>
+        
+          <a class="main-nav-link" href="/">Home</a>
+        
+          <a class="main-nav-link" href="/archives">Archives</a>
+        
+      </nav>
+      <nav id="sub-nav">
+        
+          <a id="nav-rss-link" class="nav-icon" href="/atom.xml" title="RSS Feed"></a>
+        
+        <a id="nav-search-btn" class="nav-icon" title="Search"></a>
+      </nav>
+      <div id="search-form-wrap">
+        <form action="//google.com/search" method="get" accept-charset="UTF-8" class="search-form"><input type="search" name="q" results="0" class="search-form-input" placeholder="Search"><button type="submit" class="search-form-submit">&#xF002;</button><input type="hidden" name="sitesearch" value="http://yoursite.com"></form>
+      </div>
+    </div>
+  </div>
+</header>
+      <div class="outer">
+        <section id="main"><article id="post-d247785260bbd1eb6c0d8297fd2fe51c" class="article article-type-post" itemscope itemprop="blogPost">
+  <div class="article-meta">
+    <a href="/2017/01/12/d247785260bbd1eb6c0d8297fd2fe51c/" class="article-date">
+  <time datetime="2017-01-12T13:30:16.097Z" itemprop="datePublished">2017-01-12</time>
+</a>
+    
+  </div>
+  <div class="article-inner">
+    
+    
+    <div class="article-entry" itemprop="articleBody">
+      
+        <p>UIView详解之十：控件改变坐标系（convertRect:）</p>
+<pre><code>&lt;blockquote&gt;&lt;p&gt;由于UI控件的Frame属性都是依据该控件的父控件原点作为坐标系原点（0，0）的，所以，当父控件不是控制器view时，无法根据UI控件的frame来获取其相对于控制器view的位置。在实际开发中，为了获取某个子控件相对于屏幕顶部/底部/左边/右边的实际距离，必须要去改变子控件的坐标系。&lt;/p&gt;&lt;/blockquote&gt;
+</code></pre><p></p><h1>一、示例</h1><p></p>
+<p>如下图所示，橙色view是蓝色view的子控件，蓝色view是绿色view的子控件。由于橙色view的frame是参考蓝色view的，因此，如果需要获取橙色view相对于绿色view的位置，就必须进行坐标系的转换。</p><br><p style="text-align: center;"><a href="/web/20160317213628/http://7xow65.com1.z0.glb.clouddn.com/wp-content/uploads/2015/11/IMG_0113.png"><img class="alignnone size-medium wp-image-267" src="/web/20160317213628im_/http://7xow65.com1.z0.glb.clouddn.com/wp-content/uploads/2015/11/IMG_0113-169x300.png" alt="IMG_0113" width="169" height="300"></a></p><br><h1>二、实现方法</h1><br><ul><br><li>UIView类中提供了如下四个方法，可以改变坐标系</li><br></ul><br><pre class="prettyprint linenums">- (CGPoint)convertPoint:(CGPoint)point toView:(nullable UIView <em>)view;<br>- (CGPoint)convertPoint:(CGPoint)point fromView:(nullable UIView </em>)view;<br>- (CGRect)convertRect:(CGRect)rect toView:(nullable UIView <em>)view;<br>- (CGRect)convertRect:(CGRect)rect fromView:(nullable UIView </em>)view;<br></pre><br><ul><br><li> 为了实现示例中的要求，可以通过如下方式获取橙色view相对于绿色view的距离</li><br></ul><br><pre class="prettyprint linenums">CGRect newFrame = [self.view1 convertRect:self.view2.frame toView:self.view];<br>NSLog(@&#34;newFrame:x:%f, y:%f&#34;,newFrame.origin.x,newFrame.origin.y);<br></pre><br><p> </p><br><p>转载请注明：<a href="/web/20160317213628/http://www.hcios.com/">宏创学院</a> » <a href="/web/20160317213628/http://www.hcios.com/archives/266">UIView详解之十：控件改变坐标系（convertRect:）</a></p>
+
+
+<div class="article-social"><br>            <a href="javascript:;" data-action="ding" data-id="266" id="Addlike" class="action" target="_blank" rel="external"><i class="fa fa-heart-o"></i>喜欢 (<span class="count">3</span>)</a><span class="or">or</span><span class="action action-share bdsharebuttonbox"><i class="fa fa-share-alt"></i>分享 (<span class="bds_count" data-cmd="count" title="累计分享0次">0</span>)<div class="action-popover"><div class="popover top in"><div class="arrow"></div><div class="popover-content"><a href="#" class="sinaweibo fa fa-weibo" data-cmd="tsina" title="分享到新浪微博"></a><a href="#" class="bds_qzone fa fa-star" data-cmd="qzone" title="分享到QQ空间"></a><a href="#" class="tencentweibo fa fa-tencent-weibo" data-cmd="tqq" title="分享到腾讯微博"></a><a href="#" class="qq fa fa-qq" data-cmd="sqq" title="分享到QQ好友"></a><a href="#" class="bds_renren fa fa-renren" data-cmd="renren" title="分享到人人网"></a><a href="#" class="bds_weixin fa fa-weixin" data-cmd="weixin" title="分享到微信"></a><a href="#" class="bds_more fa fa-ellipsis-h" data-cmd="more"></a></div></div></div></span><br></div>
+
+      
+    </div>
+    <footer class="article-footer">
+      <a data-url="http://yoursite.com/2017/01/12/d247785260bbd1eb6c0d8297fd2fe51c/" data-id="cixuey49a000n02pj5l9jemcy" class="article-share-link">Share</a>
+      
+      
+    </footer>
+  </div>
+  
+    
+<nav id="article-nav">
+  
+    <a href="/2017/01/12/c8c4f38f942d059889f76ed3e437a7f7/" id="article-nav-newer" class="article-nav-link-wrap">
+      <strong class="article-nav-caption">Newer</strong>
+      <div class="article-nav-title">
+        
+          (no title)
+        
+      </div>
+    </a>
+  
+  
+    <a href="/2017/01/12/da61c0f29413d2046410b51772cd617a/" id="article-nav-older" class="article-nav-link-wrap">
+      <strong class="article-nav-caption">Older</strong>
+      <div class="article-nav-title"></div>
+    </a>
+  
+</nav>
+
+  
+</article>
+
+</section>
+        
+          <aside id="sidebar">
+  
+    
+
+  
+    
+
+  
+    
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">Archives</h3>
+    <div class="widget">
+      <ul class="archive-list"><li class="archive-list-item"><a class="archive-list-link" href="/archives/2017/01/">January 2017</a></li></ul>
+    </div>
+  </div>
+
+
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">Recent Posts</h3>
+    <div class="widget">
+      <ul>
+        
+          <li>
+            <a href="/2017/01/12/4cb0e039f4e017d4e3e661b1d77e1b48/">(no title)</a>
+          </li>
+        
+          <li>
+            <a href="/2017/01/12/8bfb072940487158c8e60e0dce2e8e31/">(no title)</a>
+          </li>
+        
+          <li>
+            <a href="/2017/01/12/35c26a35a939b610c9591c35c26b7fee/">(no title)</a>
+          </li>
+        
+          <li>
+            <a href="/2017/01/12/36022e1db3604f58a061909408107fdc/">(no title)</a>
+          </li>
+        
+          <li>
+            <a href="/2017/01/12/3e567ee8594e7381ae58a5e6731d3272/">(no title)</a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+
+  
+</aside>
+        
+      </div>
+      <footer id="footer">
+  
+  <div class="outer">
+    <div id="footer-info" class="inner">
+      &copy; 2017 John Doe<br>
+      Powered by <a href="http://hexo.io/" target="_blank">Hexo</a>
+    </div>
+  </div>
+</footer>
+    </div>
+    <nav id="mobile-nav">
+  
+    <a href="/" class="mobile-nav-link">Home</a>
+  
+    <a href="/archives" class="mobile-nav-link">Archives</a>
+  
+</nav>
+    
+
+<script src="//ajax.googleapis.com/ajax/libs/jquery/2.0.3/jquery.min.js"></script>
+
+
+  <link rel="stylesheet" href="/fancybox/jquery.fancybox.css">
+  <script src="/fancybox/jquery.fancybox.pack.js"></script>
+
+
+<script src="/js/script.js"></script>
+
+  </div>
+</body>
+</html>

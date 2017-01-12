@@ -1,0 +1,763 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  
+  <title>Hexo</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+  <meta property="og:type" content="website">
+<meta property="og:title" content="Hexo">
+<meta property="og:url" content="http://yoursite.com/page/3/index.html">
+<meta property="og:site_name" content="Hexo">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="Hexo">
+  
+    <link rel="alternate" href="/atom.xml" title="Hexo" type="application/atom+xml">
+  
+  
+    <link rel="icon" href="/favicon.png">
+  
+  
+    <link href="//fonts.googleapis.com/css?family=Source+Code+Pro" rel="stylesheet" type="text/css">
+  
+  <link rel="stylesheet" href="/css/style.css">
+  
+
+</head>
+
+<body>
+  <div id="container">
+    <div id="wrap">
+      <header id="header">
+  <div id="banner"></div>
+  <div id="header-outer" class="outer">
+    <div id="header-title" class="inner">
+      <h1 id="logo-wrap">
+        <a href="/" id="logo">Hexo</a>
+      </h1>
+      
+    </div>
+    <div id="header-inner" class="inner">
+      <nav id="main-nav">
+        <a id="main-nav-toggle" class="nav-icon"></a>
+        
+          <a class="main-nav-link" href="/">Home</a>
+        
+          <a class="main-nav-link" href="/archives">Archives</a>
+        
+      </nav>
+      <nav id="sub-nav">
+        
+          <a id="nav-rss-link" class="nav-icon" href="/atom.xml" title="RSS Feed"></a>
+        
+        <a id="nav-search-btn" class="nav-icon" title="Search"></a>
+      </nav>
+      <div id="search-form-wrap">
+        <form action="//google.com/search" method="get" accept-charset="UTF-8" class="search-form"><input type="search" name="q" results="0" class="search-form-input" placeholder="Search"><button type="submit" class="search-form-submit">&#xF002;</button><input type="hidden" name="sitesearch" value="http://yoursite.com"></form>
+      </div>
+    </div>
+  </div>
+</header>
+      <div class="outer">
+        <section id="main">
+  
+    <article id="post-ebaf3f1144b46fa2b4c3b4342e0bac1f" class="article article-type-post" itemscope itemprop="blogPost">
+  <div class="article-meta">
+    <a href="/2017/01/12/ebaf3f1144b46fa2b4c3b4342e0bac1f/" class="article-date">
+  <time datetime="2017-01-12T13:30:16.097Z" itemprop="datePublished">2017-01-12</time>
+</a>
+    
+  </div>
+  <div class="article-inner">
+    
+    
+    <div class="article-entry" itemprop="articleBody">
+      
+        <p>FMDB（三）— 多线程下的使用</p>
+<pre><code>&lt;blockquote&gt;&lt;p&gt;在实际的项目运行过程中，我们常常会遇到同一时刻有多个不同的线程请求数据库的访问，那么这个时候，我们继续使用FMDatabase可能就会发生一些我们不希望出现的错误。FMDB在编写的时候显然也考虑到了这个问题，使用FMDatabaseQueue，那么你可能会省心不少！&lt;/p&gt;&lt;/blockquote&gt;
+</code></pre><p></p><h2>1.多线程下FMDB使用须知</h2><p></p>
+<p>在多线程的环境下，不能多个线程共享一个FMDatabase对象，也不能在多个线程同时创建多个FMDatabaseQueue实例来操作同一个数据库，这样可能会造成数据的操作丢失，甚至引起程序的崩溃。因为FMDB是对sqlite的封装，而文件数据库sqlite在同一时刻允许多个进程/线程读，但同一时刻只允许一个线程写。在进行写操作时，数据库文件会被琐定，此时任何其他读/写操作都被阻塞，如果阻塞超过5秒钟(默认是5秒，重新编译sqlite可以修改超时时间)，就报”database is locked”错误。如果线程使用单独的FMDatabase 实例是允许的，但是同样有可能发生database is locked的问题，这是由于多线程对sqlite的竞争引起的。</p><br><h2>2.FMDatabaseQueue的使用</h2><br><p>使用FMDatabaseQueue可以比较有效的解决多线程下对数据库的访问。FMDatabaseQueue解决多线程问题的思路大致是：创建一个队列，然后将需要执行的数据库操作放入block中，队列中的block按照添加进队列的顺序依次执行，实际上还是同步的操作，避免了多个线程同时对数据库的访问。</p><br><p>创建一个全局FMDatabaseQueue 对象，这样做的目的是为了避免发生并发访问数据库的操作，项目开发过程中可以创建一个单例来共享这个FMDatabaseQueue 对象。</p><br><pre class="prettyprint linenums">//创建一个FMDatabaseQueue队列<br>static FMDatabaseQueue <em>queue;<br></em></pre><br><pre class="prettyprint linenums">    //初始化队列<br>    queue = [FMDatabaseQueue databaseQueueWithPath:filePath];<br>    //调用inDatabase方法来将需要执行的操作添加到队列queue中去<br>    [queue inDatabase:^(FMDatabase db) {<br>        //添加需要执行的操作<br>        [db executeUpdate:@&#34;insert into person (id, name, sex, telephone) values (?, ?, ?, ?)&#34;, @100, @&#34;test1&#34;, @&#34;male&#34;, @&#34;11114321&#34;];<br>        [db executeUpdate:@&#34;insert into person (id, name, sex, telephone) values (?, ?, ?, ?)&#34;, @101, @&#34;test2&#34;, @&#34;male&#34;, @&#34;22224321&#34;];<br>        //继续添加想要执行的操作…<br>    }];<br></pre><br><p>使用相似的方法，我们就可以在FMDB中把一些任务包装进事务（在FMDatabaseQueue使用过程中尽量避免嵌套使用，以免造成死锁）：</p><br><pre class="prettyprint linenums">    //调用inTransaction方法将需要执行的操作添加到队列中去<br>    [queue inTransaction:^(FMDatabase <em>db, BOOL </em>rollback) {<br>        //在事务中添加需要执行的操作，出现异常时及时回滚<br>        if (![db executeUpdate:@&#34;insert into person (id, name, sex, telephone) values (?, ?, ?, ?)&#34;, @104, @&#34;test3&#34;, @&#34;male&#34;, @&#34;11114321&#34;]) {<br>            <em>rollback = YES;<br>            return ;<br>        }<br>        if (![db executeUpdate:@&#34;insert into person (id, name, sex, telephone) values (?, ?, ?, ?)&#34;, @105, @&#34;test4&#34;, @&#34;male&#34;, @&#34;11114321&#34;]) {
+            </em>rollback = YES;<br>            return ;<br>        }<br>    }];<br></pre><br><h2>3.总结</h2><br><p>FMDatabaseQueue虽然看似一个队列，实际上它本身并不是，它通过内部创建一个Serial的dispatch_queue_t来处理通过inDatabase和inTransaction传入的Blocks，所以当我们在主线程（或者后台）调用inDatabase或者inTransaction时，代码实际上是同步的，这样就避免了多个线程同时访问数据库的问题。如果在后台执行大量的更新操作时，主线程又需要执行少量的数据库操作，那么在后台操作执行完之前，它还是需要等待，这时就会阻塞主线程。</p><br><ul><br><li>如果在后台使用inDatabase来更新大批量的数据时，可以考虑使用inTransaction，因为后者的更新效率高很多，特别是更新大量操作（如1000条以上）</li><br><li>如果非必须一次性的、完整性的大批量数据，可以考虑使用数据拆解，将大量数据分成较多批少量的数据，再进行更新操作，这样能有效地避免长时间的阻塞</li><br><li>如果UI上不需要在更新数据时产生交互，可以将FMDatabaseQueue放入一个子线程中异步执行，这是一个不错的选择</li><br></ul><br><p> </p><br><p>转载请注明：<a href="/web/20160316172307/http://www.hcios.com/">宏创学院</a> » <a href="/web/20160316172307/http://www.hcios.com/archives/1013">FMDB（三）— 多线程下的使用</a></p>
+
+
+<div class="article-social"><br>            <a href="javascript:;" data-action="ding" data-id="1013" id="Addlike" class="action" target="_blank" rel="external"><i class="fa fa-heart-o"></i>喜欢 (<span class="count">0</span>)</a><span class="or">or</span><span class="action action-share bdsharebuttonbox"><i class="fa fa-share-alt"></i>分享 (<span class="bds_count" data-cmd="count" title="累计分享0次">0</span>)<div class="action-popover"><div class="popover top in"><div class="arrow"></div><div class="popover-content"><a href="#" class="sinaweibo fa fa-weibo" data-cmd="tsina" title="分享到新浪微博"></a><a href="#" class="bds_qzone fa fa-star" data-cmd="qzone" title="分享到QQ空间"></a><a href="#" class="tencentweibo fa fa-tencent-weibo" data-cmd="tqq" title="分享到腾讯微博"></a><a href="#" class="qq fa fa-qq" data-cmd="sqq" title="分享到QQ好友"></a><a href="#" class="bds_renren fa fa-renren" data-cmd="renren" title="分享到人人网"></a><a href="#" class="bds_weixin fa fa-weixin" data-cmd="weixin" title="分享到微信"></a><a href="#" class="bds_more fa fa-ellipsis-h" data-cmd="more"></a></div></div></div></span><br></div>
+
+      
+    </div>
+    <footer class="article-footer">
+      <a data-url="http://yoursite.com/2017/01/12/ebaf3f1144b46fa2b4c3b4342e0bac1f/" data-id="cixuey49g000r02pjy4ntkmum" class="article-share-link">Share</a>
+      
+      
+    </footer>
+  </div>
+  
+</article>
+
+
+  
+    <article id="post-edd803fc68281190247ecaa02bcd4bd5" class="article article-type-post" itemscope itemprop="blogPost">
+  <div class="article-meta">
+    <a href="/2017/01/12/edd803fc68281190247ecaa02bcd4bd5/" class="article-date">
+  <time datetime="2017-01-12T13:30:16.097Z" itemprop="datePublished">2017-01-12</time>
+</a>
+    
+  </div>
+  <div class="article-inner">
+    
+    
+    <div class="article-entry" itemprop="articleBody">
+      
+        <pre><code>&lt;header&gt;&lt;a class=&quot;label label-important&quot; href=&quot;/web/20160516182658/http://www.hcios.com/archives/category/ocjc&quot;&gt;OC基础&lt;i class=&quot;label-arrow&quot;&gt;&lt;/i&gt;&lt;/a&gt;&lt;h2&gt;&lt;a target=&quot;_blank&quot; href=&quot;/web/20160516182658/http://www.hcios.com/archives/2106&quot; title=&quot;Foundation框架（四） — NSNumber&quot;&gt;Foundation框架（四） — NSNumber  &lt;/a&gt;&lt;/h2&gt;
+&lt;/header&gt;
+&lt;div class=&quot;focus&quot;&gt;&lt;a target=&quot;_blank&quot; href=&quot;/web/20160516182658/http://www.hcios.com/archives/2106&quot;&gt;&lt;img class=&quot;thumb&quot; src=&quot;/web/20160516182658im_/http://www.hcios.com/wp-content/themes/yusi1.0/timthumb.php?src=http://www.hcios.com/wp-content/uploads/2016/02/technologies_objectiveC.png&amp;amp;h=123&amp;amp;w=200&amp;amp;q=90&amp;amp;zc=1&amp;amp;ct=1&quot; alt=&quot;Foundation框架（四） — NSNumber&quot;/&gt;&lt;/a&gt;&lt;/div&gt;
+        &lt;span class=&quot;note&quot;&gt; 在编程的过程中，一些基本数据类型的变量是必不可少的。但是在OC编程语言当中，OC的消息机制并不能向这些基本数据类型发送消息，而且OC的集合当中是不能存放基本数据类型的，所以我们就需要将基本数据类型转化成对象来使用。OC中提供了NSNumber类来将基本数据类型“包装”成数字对象，...&lt;/span&gt;
+</code></pre><p class="auth-span"><br>    <span class="muted"><i class="fa fa-clock-o"></i> 3个月前 (02-22)</span>    <span class="muted"><i class="fa fa-eye"></i> 247℃</span>    <span class="muted"><br><a href="javascript:;" data-action="ding" data-id="2106" id="Addlike" class="action" target="_blank" rel="external"><i class="fa fa-heart-o"></i><span class="count">1</span>喜欢</a></span></p>
+
+      
+    </div>
+    <footer class="article-footer">
+      <a data-url="http://yoursite.com/2017/01/12/edd803fc68281190247ecaa02bcd4bd5/" data-id="cixuey49i000s02pjt4qi92co" class="article-share-link">Share</a>
+      
+      
+    </footer>
+  </div>
+  
+</article>
+
+
+  
+    <article id="post-f5a64e8fcbc49a06c7f4da4dad380bfe" class="article article-type-post" itemscope itemprop="blogPost">
+  <div class="article-meta">
+    <a href="/2017/01/12/f5a64e8fcbc49a06c7f4da4dad380bfe/" class="article-date">
+  <time datetime="2017-01-12T13:30:16.097Z" itemprop="datePublished">2017-01-12</time>
+</a>
+    
+  </div>
+  <div class="article-inner">
+    
+    
+    <div class="article-entry" itemprop="articleBody">
+      
+        <pre><code>&lt;header&gt;&lt;a class=&quot;label label-important&quot; href=&quot;/web/20160518024156/http://www.hcios.com/archives/category/kfrm&quot;&gt;iOS入门&lt;i class=&quot;label-arrow&quot;&gt;&lt;/i&gt;&lt;/a&gt;&lt;h2&gt;&lt;a target=&quot;_blank&quot; href=&quot;/web/20160518024156/http://www.hcios.com/archives/1255&quot; title=&quot;友盟消息推送SDK集成&quot;&gt;友盟消息推送SDK集成  &lt;/a&gt;&lt;/h2&gt;
+&lt;/header&gt;
+&lt;div class=&quot;focus&quot;&gt;&lt;a target=&quot;_blank&quot; href=&quot;/web/20160518024156/http://www.hcios.com/archives/1255&quot;&gt;&lt;img class=&quot;thumb&quot; src=&quot;/web/20160518024156im_/http://www.hcios.com/wp-content/themes/yusi1.0/timthumb.php?src=http://www.hcios.com/wp-content/uploads/2016/01/20130703092804_87552.jpg&amp;amp;h=123&amp;amp;w=200&amp;amp;q=90&amp;amp;zc=1&amp;amp;ct=1&quot; alt=&quot;友盟消息推送SDK集成&quot;/&gt;&lt;/a&gt;&lt;/div&gt;
+        &lt;span class=&quot;note&quot;&gt; 消息推送功能在现在的手机应用中使用的越来越广泛，特别是商城类、新闻类的应用，会大量的使用到消息推送。当然，在方便用户获得第一手信息的同时，有时候用户也会收到许多垃圾消息。而苹果官方支持的消息推送API使用起来比较麻烦，所以很多应用会选择第三方集成的SDK，那么今天这里给大家介绍一...&lt;/span&gt;
+</code></pre><p class="auth-span"><br>        <span class="muted"><i class="fa fa-user"></i> <a href="/web/20160518024156/http://www.hcios.com/archives/author/chaohui">晁辉</a></span><br>        <span class="muted"><i class="fa fa-clock-o"></i> 4个月前 (01-13)</span>    <span class="muted"><i class="fa fa-eye"></i> 466℃</span>    <span class="muted"><br><a href="javascript:;" data-action="ding" data-id="1255" id="Addlike" class="action" target="_blank" rel="external"><i class="fa fa-heart-o"></i><span class="count">1</span>喜欢</a></span></p>
+
+      
+    </div>
+    <footer class="article-footer">
+      <a data-url="http://yoursite.com/2017/01/12/f5a64e8fcbc49a06c7f4da4dad380bfe/" data-id="cixuey49k000t02pj6ttklu7m" class="article-share-link">Share</a>
+      
+      
+    </footer>
+  </div>
+  
+</article>
+
+
+  
+    <article id="post-fe3dc0df131c5378d115be26615dc9ef" class="article article-type-post" itemscope itemprop="blogPost">
+  <div class="article-meta">
+    <a href="/2017/01/12/fe3dc0df131c5378d115be26615dc9ef/" class="article-date">
+  <time datetime="2017-01-12T13:30:16.097Z" itemprop="datePublished">2017-01-12</time>
+</a>
+    
+  </div>
+  <div class="article-inner">
+    
+    
+    <div class="article-entry" itemprop="articleBody">
+      
+        <pre><code>&lt;header&gt;&lt;h2&gt;&lt;a target=&quot;_blank&quot; href=&quot;/web/20160514140635/http://www.hcios.com/archives/491&quot; title=&quot;iOS新建项目架构规范&quot;&gt;iOS新建项目架构规范  &lt;/a&gt;&lt;/h2&gt;
+&lt;/header&gt;
+&lt;div class=&quot;focus&quot;&gt;&lt;a target=&quot;_blank&quot; href=&quot;/web/20160514140635/http://www.hcios.com/archives/491&quot;&gt;&lt;img class=&quot;thumb&quot; src=&quot;/web/20160514140635im_/http://www.hcios.com/wp-content/themes/yusi1.0/timthumb.php?src=http://www.hcios.com/wp-content/uploads/2015/12/images-1.png&amp;amp;h=123&amp;amp;w=200&amp;amp;q=90&amp;amp;zc=1&amp;amp;ct=1&quot; alt=&quot;iOS新建项目架构规范&quot;/&gt;&lt;/a&gt;&lt;/div&gt;
+        &lt;span class=&quot;note&quot;&gt; 当我们进入到新的公司的第一天,看到以前老员工编写的代码,找个东西累死人咧,那个抓耳挠腮的啊,一般情况下都有想揍人的赶脚. 哈哈, 包忙, 先想一下自己的代码! 想一下自己写的代码怎么才能新来的人一眼就能看懂,想找什么,在几秒之内就能找到?这个就要在前期创建项目的时候留神了, 要保...&lt;/span&gt;
+</code></pre><p class="auth-span"><br>        <span class="muted"><i class="fa fa-user"></i> <a href="/web/20160514140635/http://www.hcios.com/archives/author/hcios">宏创学院</a></span><br>        <span class="muted"><i class="fa fa-clock-o"></i> 5个月前 (12-08)</span>    <span class="muted"><i class="fa fa-eye"></i> 514℃</span>    <span class="muted"><br><a href="javascript:;" data-action="ding" data-id="491" id="Addlike" class="action" target="_blank" rel="external"><i class="fa fa-heart-o"></i><span class="count">1</span>喜欢</a></span></p>
+
+      
+    </div>
+    <footer class="article-footer">
+      <a data-url="http://yoursite.com/2017/01/12/fe3dc0df131c5378d115be26615dc9ef/" data-id="cixuey49m000u02pj3u0059be" class="article-share-link">Share</a>
+      
+      
+    </footer>
+  </div>
+  
+</article>
+
+
+  
+    <article id="post-ff28ebd91d62e7e91c37a85305fd69b4" class="article article-type-post" itemscope itemprop="blogPost">
+  <div class="article-meta">
+    <a href="/2017/01/12/ff28ebd91d62e7e91c37a85305fd69b4/" class="article-date">
+  <time datetime="2017-01-12T13:30:16.097Z" itemprop="datePublished">2017-01-12</time>
+</a>
+    
+  </div>
+  <div class="article-inner">
+    
+    
+    <div class="article-entry" itemprop="articleBody">
+      
+        <pre><code>&lt;header&gt;&lt;a class=&quot;label label-important&quot; href=&quot;/web/20160517080955/http://www.hcios.com/archives/category/kfrm&quot;&gt;iOS入门&lt;i class=&quot;label-arrow&quot;&gt;&lt;/i&gt;&lt;/a&gt;&lt;h2&gt;&lt;a target=&quot;_blank&quot; href=&quot;/web/20160517080955/http://www.hcios.com/archives/1191&quot; title=&quot;iOS开发之网络编程篇一：网络开发基本概念介绍&quot;&gt;iOS开发之网络编程篇一：网络开发基本概念介绍  &lt;/a&gt;&lt;/h2&gt;
+&lt;/header&gt;
+&lt;div class=&quot;focus&quot;&gt;&lt;a target=&quot;_blank&quot; href=&quot;/web/20160517080955/http://www.hcios.com/archives/1191&quot;&gt;&lt;img class=&quot;thumb&quot; src=&quot;/web/20160517080955im_/http://www.hcios.com/wp-content/themes/yusi1.0/timthumb.php?src=http://www.hcios.com/wp-content/uploads/2016/01/iphone-6-won-t-connect-to-wi-fi.jpg&amp;amp;h=123&amp;amp;w=200&amp;amp;q=90&amp;amp;zc=1&amp;amp;ct=1&quot; alt=&quot;iOS开发之网络编程篇一：网络开发基本概念介绍&quot;/&gt;&lt;/a&gt;&lt;/div&gt;
+        &lt;span class=&quot;note&quot;&gt; 移动网络应用 = 良好的UI + 良好的用户体验 + 实时更新的数据，而网络是实时更新数据的基本手段，由此可见网络开发对于移动应用开发的重要性。
+</code></pre><p>一、网络开发相关概念<br>客户端：就是咱们所开发的应用，用于接收网络请求下来的数据，并展示数据。<br>服务器：网络开发的核心就是围绕服务器，获…</p>
+<p class="auth-span"><br>        <span class="muted"><i class="fa fa-user"></i> <a href="/web/20160517080955/http://www.hcios.com/archives/author/legongbiao">勒公彪</a></span><br>        <span class="muted"><i class="fa fa-clock-o"></i> 4个月前 (01-09)</span>    <span class="muted"><i class="fa fa-eye"></i> 737℃</span>    <span class="muted"><br><a href="javascript:;" data-action="ding" data-id="1191" id="Addlike" class="action" target="_blank" rel="external"><i class="fa fa-heart-o"></i><span class="count">6</span>喜欢</a></span></p>
+
+      
+    </div>
+    <footer class="article-footer">
+      <a data-url="http://yoursite.com/2017/01/12/ff28ebd91d62e7e91c37a85305fd69b4/" data-id="cixuey49n000v02pj3i9s2k7h" class="article-share-link">Share</a>
+      
+      
+    </footer>
+  </div>
+  
+</article>
+
+
+  
+    <article id="post-22eafc1b7c675e42f69841d68421680d" class="article article-type-post" itemscope itemprop="blogPost">
+  <div class="article-meta">
+    <a href="/2017/01/12/22eafc1b7c675e42f69841d68421680d/" class="article-date">
+  <time datetime="2017-01-12T13:30:16.096Z" itemprop="datePublished">2017-01-12</time>
+</a>
+    
+  </div>
+  <div class="article-inner">
+    
+    
+    <div class="article-entry" itemprop="articleBody">
+      
+        <p>iOS9开发入门教程索引(从这里起步，从零开始学习吧)</p>
+<pre><code>&lt;blockquote&gt;&lt;p&gt;这里把宏创学院入门教程做一个索引，iOS零基础的网友们可以按照本文的顺序来循序渐进的学习。&lt;/p&gt;&lt;/blockquote&gt;
+</code></pre><p></p><h2>一、iOS开发基础</h2><p></p>
+<p></p><h3> Xcode的使用</h3><p></p>
+<p><ul></ul></p>
+<p><li> <a title="Xcode使用介绍之一：Xcode简介+创建App应用" href="/web/20160517080926/http://www.hcios.com/?p=92" target="_blank">Xcode使用介绍之一：Xcode简介+创建App应用</a></li></p>
+<p><li><a title="Xcode使用介绍之二：创建UI界面+连线" href="/web/20160517080926/http://www.hcios.com/?p=103" target="_blank">Xcode使用介绍之二：创建UI界面+连线</a></li></p>
+<p><li><a title="Xcode使用介绍之三：程序调试" href="/web/20160517080926/http://www.hcios.com/?p=116" target="_blank">Xcode使用介绍之三：程序调试</a></li></p>
+<p><li><a title="Xcode使用介绍之四：自动布局初体验" href="/web/20160517080926/http://www.hcios.com/?p=123" target="_blank">Xcode使用介绍之四：自动布局初体验</a></li></p>
+<p><li><a title="Xcode使用介绍之五：初识UI控件" href="/web/20160517080926/http://www.hcios.com/?p=307" target="_blank">Xcode使用介绍之五：初识UI控件 </a></li></p>
+<p><li><a title="Xcode使用介绍之六：常用快捷键" href="/web/20160517080926/http://www.hcios.com/?p=699" target="_blank">Xcode使用介绍之六：常用快捷键 </a></li></p>
+<p><li><a title="Xcode使用介绍之七：常用插件" href="/web/20160517080926/http://www.hcios.com/?p=705" target="_blank">Xcode使用介绍之七：常用插件 </a></li></p>
+<p><li><a title="Xcode使用介绍之八：快捷代码段（code snippets）" href="/web/20160517080926/http://www.hcios.com/?p=956" target="_blank">Xcode使用介绍之八：快捷代码段（code snippets） </a></li><br></p>
+<p></p><h2>二、基础UI控件</h2><p></p>
+<p></p><h3>UIView视图</h3><p></p>
+<p><ul></ul></p>
+<p><li><a title="UIView详解之一：UIView简介" href="/web/20160517080926/http://www.hcios.com/archives/1531" target="_blank">UIView详解之一：UIView简介</a></li></p>
+<p><li><a title="UIView详解之二：视图的外观" href="/web/20160517080926/http://www.hcios.com/archives/1549" target="_blank">UIView详解之二：视图的外观</a></li></p>
+<p><li><a title="UIView详解之三：视图的形变" href="/web/20160517080926/http://www.hcios.com/archives/1578" target="_blank">UIView详解之三：视图的形变</a></li></p>
+<p><li><a title="UIView详解之四：视图的层次关系" href="/web/20160517080926/http://www.hcios.com/archives/1582" target="_blank">UIView详解之四：视图的层次关系</a></li></p>
+<p><li><a title="UIView详解之五：视图的动画" href="/web/20160517080926/http://www.hcios.com/archives/1611" target="_blank">UIView详解之五：视图的动画</a></li></p>
+<p><li><a title="UIView详解之六：响应用户交互事件" href="/web/20160517080926/http://www.hcios.com/archives/1626" target="_blank">UIView详解之六：响应用户交互事件</a></li></p>
+<p><li><a title="UIView详解之七：内容模式contentMode" href="/web/20160517080926/http://www.hcios.com/archives/1675" target="_blank">UIView详解之七：内容模式contentMode</a></li></p>
+<p><li><a title="UIView详解之八：图片拉伸" href="/web/20160517080926/http://www.hcios.com/archives/1684" target="_blank">UIView详解之八：图片拉伸</a></li></p>
+<p><li><a title="UIView详解之九：自定义UIView" href="/web/20160517080926/http://www.hcios.com/archives/1702" target="_blank">UIView详解之九：自定义UIView </a></li></p>
+<p><li><a title="UIView详解之十：控件改变坐标系（convertRect:）" href="/web/20160517080926/http://www.hcios.com/archives/266">UIView详解之十：控件改变坐标系（convertRect:）</a></li><br></p>
+<p></p><h3>手势</h3><p></p>
+<p><ul></ul></p>
+<p><li><a title="UIGestureRecognizer手势 : 1-概要介绍" href="/web/20160517080926/http://www.hcios.com/?p=152" target="_blank">UIGestureRecognizer手势 : 1-概要介绍</a></li></p>
+<p><li><a title="UIGestureRecognizer手势 : 2-点击手势" href="/web/20160517080926/http://www.hcios.com/?p=156" target="_blank">UIGestureRecognizer手势 : 2-点击手势</a></li></p>
+<p><li><a title="UIGestureRecognizer手势 : 3-捏合手势与旋转手势" href="/web/20160517080926/http://www.hcios.com/?p=159" target="_blank">UIGestureRecognizer手势 : 3-捏合手势与旋转手势</a></li></p>
+<p><li><a title="UIGestureRecognizer手势 : 4-滑动手势" href="/web/20160517080926/http://www.hcios.com/?p=164" target="_blank">UIGestureRecognizer手势 : 4-滑动手势</a></li></p>
+<p><li><a title="UIGestureRecognizer手势 : 5-拖动手势" href="/web/20160517080926/http://www.hcios.com/?p=169" target="_blank">UIGestureRecognizer手势 : 5-拖动手势</a></li></p>
+<p><li><a title="UIGestureRecognizer手势 : 6-长按手势" href="/web/20160517080926/http://www.hcios.com/?p=172" target="_blank">UIGestureRecognizer手势 : 6-长按手势</a></li><br></p>
+<p></p><h3> 音频播放与录音</h3><p></p>
+<p><ul></ul></p>
+<p><li><a title="AVAudioPlayer: 1-播放音频" href="/web/20160517080926/http://www.hcios.com/?p=206" target="_blank">AVAudioPlayer: 1-播放音频</a></li></p>
+<p><li><a title="AVAudioPlayer：2-处理中断（来电、闹钟）" href="/web/20160517080926/http://www.hcios.com/?p=209" target="_blank">AVAudioPlayer：2-处理中断（来电、闹钟）</a></li><br></p>
+<p><ul></ul></p>
+<p><li><a title="AVAudioRecorder类（录音）：1-基本使用" href="/web/20160517080926/http://www.hcios.com/?p=211" target="_blank">AVAudioRecorder类（录音）：1-基本使用</a></li></p>
+<p><li><a title="AVAudioRecorder类（录音）：2-播放录音文件" href="/web/20160517080926/http://www.hcios.com/?p=217" target="_blank">AVAudioRecorder类（录音）：2-播放录音文件</a></li></p>
+<p><li><a title="AVAudioRecorder类（录音）：3-微信录音方式实现" href="/web/20160517080926/http://www.hcios.com/?p=220" target="_blank">AVAudioRecorder类（录音）：3-微信录音方式实现</a></li><br></p>
+<p></p><h3>UIImageView控件</h3><p></p>
+<p><ul></ul></p>
+<p><li><a title="UIImageView控件：1-基本使用" href="/web/20160517080926/http://www.hcios.com/?p=281" target="_blank">UIImageView控件：1-基本使用</a></li></p>
+<p><li><a title="UIImageView控件：2-帧动画功能（TOM猫实现）" href="/web/20160517080926/http://www.hcios.com/?p=286" target="_blank">UIImageView控件：2-帧动画功能（TOM猫实现） </a></li></p>
+<p><li><strong><a class="row-title" title="UIImageView控件：2-帧动画功能（TOM猫实现-下）" href="/web/20160517080926/http://www.hcios.com/?p=295">UIImageView控件：2-帧动画功能（TOM猫实现-下）</a></strong></li></p>
+<p><li><a title="UIImageView控件：3-网络图片下载（SDWebImage）" href="/web/20160517080926/http://www.hcios.com/?p=290" target="_blank">UIImageView控件：3-网络图片下载（SDWebImage） </a></li><br></p>
+<p></p><h3>UIButton控件</h3><p></p>
+<p><ul></ul></p>
+<p><li><a title="UIButton：按钮的基本使用" href="/web/20160517080926/http://www.hcios.com/?p=302" target="_blank">UIButton：按钮的基本使用 </a></li></p>
+<p><li><a title="UI控件无法响应点击等事件的探索" href="/web/20160517080926/http://www.hcios.com/?p=1066" target="_blank">UI控件无法响应点击等事件的探索</a>(高级课程)</li><br></p>
+<p></p><h3>UIAlertController与UIAlertAction：告警提示框的实现</h3><p></p>
+<p><ul></ul></p>
+<p><li><a title="提醒功能实现：UIAlertController与UIAlertAction" href="/web/20160517080926/http://www.hcios.com/?p=299" target="_blank">提醒功能实现：UIAlertController与UIAlertAction </a></li><br></p>
+<p></p><h3>UIScrollView滚动视图</h3><p></p>
+<p><ul></ul></p>
+<p><li><a title="UIScrollView滚动视图：1-基本使用" href="/web/20160517080926/http://www.hcios.com/?p=316" target="_blank">UIScrollView滚动视图：1-基本使用 </a></li></p>
+<p><li><a title="UIScrollView滚动视图：2-代理" href="/web/20160517080926/http://www.hcios.com/?p=320" target="_blank">UIScrollView滚动视图：2-代理 </a></li><br></p>
+<p></p><h3>UITableView表视图（重点内容）</h3><p></p>
+<p><ul></ul></p>
+<p><li><a title="UITableView详解：1-数据源方法" href="/web/20160517080926/http://www.hcios.com/?p=397" target="_blank">UITableView详解：1-数据源方法</a></li></p>
+<p><li><a title="UITableView详解：2-代理方法之点击单元格" href="/web/20160517080926/http://www.hcios.com/?p=401" target="_blank">UITableView详解：2-代理方法之点击单元格</a></li></p>
+<p><li><a title="UITableView详解：3-代理方法之编辑单元格" href="/web/20160517080926/http://www.hcios.com/?p=406" target="_blank">UITableView详解：3-代理方法之编辑单元格 </a></li></p>
+<p><li><a title="UITableView详解：4-了解单元格（UITableViewCell）" href="/web/20160517080926/http://www.hcios.com/?p=409" target="_blank">UITableView详解：4-了解单元格（UITableViewCell）</a></li></p>
+<p><li><a title="UITableView详解：5-单元格（UITableViewCell）性能优化" href="/web/20160517080926/http://www.hcios.com/?p=415" target="_blank">UITableView详解：5-单元格（UITableViewCell）性能优化</a></li></p>
+<p><li><a title="UITableView详解：6-分段（Section）" href="/web/20160517080926/http://www.hcios.com/?p=447" target="_blank">UITableView详解：6-分段（Section） </a></li></p>
+<p><li><a title="UITableView详解：7-自定义Section的Header、Footer" href="/web/20160517080926/http://www.hcios.com/?p=451" target="_blank">UITableView详解：7-自定义Section的Header、Footer</a></li></p>
+<p><li><a title="UITableView详解：8-自定义Cell" href="/web/20160517080926/http://www.hcios.com/?p=460" target="_blank">UITableView详解：8-自定义Cell</a></li></p>
+<p><li><a title="UITableView详解：9-Cell高度的设置" href="/web/20160517080926/http://www.hcios.com/?p=464" target="_blank">UITableView详解：9-Cell高度的设置</a></li></p>
+<p><li><a title="UITableView详解：10-动态调整Cell高度（self-sizing）" href="/web/20160517080926/http://www.hcios.com/?p=466" target="_blank">UITableView详解：10-动态调整Cell高度（self-sizing）</a></li></p>
+<p><li><a title="UITableView详解：11-动态调整Cell高度（代码）" href="/web/20160517080926/http://www.hcios.com/?p=471" target="_blank">UITableView详解：11-动态调整Cell高度（代码）</a></li></p>
+<p><li><a title="UITableView详解：12-改变Cell位置" href="/web/20160517080926/http://www.hcios.com/?p=527" target="_blank">UITableView详解：12-改变Cell位置</a></li></p>
+<p><li><a title="UITableView详解：13-TableView的Header与Footer" href="/web/20160517080926/http://www.hcios.com/?p=538" target="_blank">UITableView详解：13-TableView的Header与Footer</a></li></p>
+<p><li><a title="UITableView详解：14-上拉刷新与下拉加载" href="/web/20160517080926/http://www.hcios.com/?p=553" target="_blank">UITableView详解：14-上拉刷新与下拉加载</a></li><br></p>
+<p></p><h3>UIWebView</h3><p></p>
+<p><ul></ul></p>
+<p><li><a title="UIWebView介绍：1-基本使用方法" href="/web/20160517080926/http://www.hcios.com/?p=484" target="_blank">UIWebView介绍：1-基本使用方法</a></li></p>
+<p><li><a title="UIWebView介绍：2-代理方法" href="/web/20160517080926/http://www.hcios.com/?p=508" target="_blank">UIWebView介绍：2-代理方法</a></li></p>
+<p><li><a title="UIWebView介绍：3-的浏览控制功能" href="/web/20160517080926/http://www.hcios.com/?p=516" target="_blank">UIWebView介绍：3-浏览控制功能</a></li></p>
+<p><li><a title="UIWebView介绍：4-利用第三方框架实现加载进度条" href="/web/20160517080926/http://www.hcios.com/?p=775" target="_blank">UIWebView介绍：4-利用第三方框架实现加载进度条 </a></li></p>
+<p><li><a title="UIWebView介绍：5-定制html网页显示效果" href="/web/20160517080926/http://www.hcios.com/archives/1345" target="_blank">UIWebView介绍：5-定制html网页显示效果</a></li><br></p>
+<p></p><h3>UISegmentedControl</h3><p></p>
+<p><ul></ul></p>
+<p><li><a title="UISegmentedControl基本使用" href="/web/20160517080926/http://www.hcios.com/?p=523" target="_blank">UISegmentedControl基本使用 </a></li></p>
+<p><li><a title="UISegmentedControl实现不同视图切换" href="/web/20160517080926/http://www.hcios.com/?p=546" target="_blank">UISegmentedControl实现不同视图切换</a></li><br></p>
+<p></p><h3>UICollectionView</h3><p></p>
+<p><ul></ul></p>
+<p><li><a title="UICollectionView详解：1-集合视图简介" href="/web/20160517080926/http://www.hcios.com/?p=601" target="_blank">UICollectionView详解：1-集合视图简介</a></li></p>
+<p><li><a title="UICollectionView详解：2-数据源协议DataSource" href="/web/20160517080926/http://www.hcios.com/?p=611" target="_blank">UICollectionView详解：2-数据源协议DataSource</a></li></p>
+<p><li><a title="UICollectionView详解：3-代理协议：点击Cell" href="/web/20160517080926/http://www.hcios.com/?p=613" target="_blank">UICollectionView详解：3-代理协议：点击Cell </a></li></p>
+<p><li><a title="UICollectionView详解：4-Cell的大小与间隔设置" href="/web/20160517080926/http://www.hcios.com/?p=621" target="_blank">UICollectionView详解：4-Cell的大小与间隔设置 </a></li></p>
+<p><li><a title="UICollectionView详解：5-自定义Cell" href="/web/20160517080926/http://www.hcios.com/?p=617" target="_blank">UICollectionView详解：5-自定义Cell </a></li></p>
+<p><li><a title="UICollectionView详解：6-补充视图(Header/Footer)" href="/web/20160517080926/http://www.hcios.com/?p=647" target="_blank">UICollectionView详解：6-补充视图(Header/Footer) </a></li><br></p>
+<p></p><h3>UITextField</h3><p></p>
+<p><ul></ul></p>
+<p><li><a title="UITextField详解之一：UITextField基本属性" href="/web/20160517080926/http://www.hcios.com/?p=657" target="_blank">UITextField详解之一：UITextField基本属性</a></li></p>
+<p><li><a title="UITextField详解之二：UITextFieldDelegate以及代理方法" href="/web/20160517080926/http://www.hcios.com/?p=678" target="_blank">UITextField详解之二：UITextFieldDelegate以及代理方法 </a></li><br></p>
+<p></p><h3>UITextView</h3><p></p>
+<p><ul></ul></p>
+<p><li><a title="UITextView详解之一：UITextView特性及其代理方法" href="/web/20160517080926/http://www.hcios.com/?p=813" target="_blank">UITextView详解之一：UITextView特性及其代理方法</a></li></p>
+<p><li><a title="UITextView详解之二:UITextView常见用法及实现" href="/web/20160517080926/http://www.hcios.com/?p=857" target="_blank">UITextView详解之二:UITextView常见用法及实现 </a></li><br></p>
+<p></p><h3>UISearchbar</h3><p></p>
+<p><ul></ul></p>
+<p><li><a title="UISearchBar使用介绍之一：基本设置" href="/web/20160517080926/http://www.hcios.com/?p=700" target="_blank">UISearchBar使用介绍之一：基本设置</a></li></p>
+<p><li><a title="UISearchBar使用介绍之二：代理方法" href="/web/20160517080926/http://www.hcios.com/?p=721" target="_blank">UISearchBar使用介绍之二：代理方法</a></li></p>
+<p><li><a title="UISearchBar使用介绍之三：实现搜索" href="/web/20160517080926/http://www.hcios.com/?p=812" target="_blank">UISearchBar使用介绍之三：实现搜索</a></li><br></p>
+<p></p><h3>UIPageControl</h3><p></p>
+<p><ul></ul></p>
+<p><li><a title="UIPageControl-基本介绍" href="/web/20160517080926/http://www.hcios.com/archives/1435" target="_blank">UIPageControl-基本介绍</a></li></p>
+<p><li><a title="UIPageControl-图片轮播器" href="/web/20160517080926/http://www.hcios.com/archives/1440" target="_blank">UIPageControl-图片轮播器 </a></li><br></p>
+<p></p><h3>UIPickerView</h3><p></p>
+<p><ul></ul></p>
+<p><li><a title="UIPickerView之一－基本介绍" href="/web/20160517080926/http://www.hcios.com/archives/1537" target="_blank">UIPickerView之一－基本介绍</a></li></p>
+<p><li><a title="UIPickerView之二－相互依赖的多列选择器" href="/web/20160517080926/http://www.hcios.com/archives/1594" target="_blank">UIPickerView之二－相互依赖的多列选择器</a></li><br></p>
+<p></p><h3>UIDatePicker</h3><p></p>
+<p><ul></ul></p>
+<p><li><a title="UIDatePicker介绍之一基本使用" href="/web/20160517080926/http://www.hcios.com/archives/1738" target="_blank">UIDatePicker介绍之一基本使用</a></li></p>
+<p><li><a title="UIDatePicker介绍之二倒计时器" href="/web/20160517080926/http://www.hcios.com/archives/1719" target="_blank">UIDatePicker介绍之二倒计时器</a></li><br></p>
+<p></p><h3>UISlider</h3><p></p>
+<p><ul></ul></p>
+<p><li><a title="UISlider-改变图片透明度" href="/web/20160517080926/http://www.hcios.com/archives/2383" target="_blank">UISlider-改变图片透明度 </a></li><br></p>
+<p></p><h2>三、控制器</h2><p></p>
+<p></p><h3> UIViewController</h3><p></p>
+<p><ul></ul></p>
+<p><li><a title="UIViewController介绍：1-创建控制器" href="/web/20160517080926/http://www.hcios.com/?p=731" target="_blank">UIViewController介绍：1-创建控制器</a></li></p>
+<p><li><a title="UIViewController介绍：2-控制器的生命周期" href="/web/20160517080926/http://www.hcios.com/?p=768" target="_blank">UIViewController介绍：2-控制器的生命周期</a></li></p>
+<p><li><a title="UIViewController介绍：3-控制器切换（使用StoryBoard）" href="/web/20160517080926/http://www.hcios.com/?p=819" target="_blank">UIViewController介绍：3-控制器切换（使用StoryBoard）</a></li></p>
+<p><li><a title="UIViewController介绍：4-控制器切换（使用代码）" href="/web/20160517080926/http://www.hcios.com/?p=831" target="_blank">UIViewController介绍：4-控制器切换（使用代码）</a></li></p>
+<p><li><a title="UIViewController介绍：5-控制器嵌套" href="/web/20160517080926/http://www.hcios.com/?p=901" target="_blank">UIViewController介绍：5-控制器嵌套</a></li></p>
+<p><li><a title="UIWindow、UIView、UIViewController的关系" href="/web/20160517080926/http://www.hcios.com/archives/252">UIViewController/UIView/UIWindow的关系</a></li><br></p>
+<p></p><h3>UINavigationController</h3><p></p>
+<p><ul></ul></p>
+<p><li><a title="UINavigationController介绍：1-导航控制器简介" href="/web/20160517080926/http://www.hcios.com/?p=1030" target="_blank">UINavigationController介绍：1-导航控制器简介 </a></li></p>
+<p><li><a title="UINavigationController介绍：2-控制器跳转" href="/web/20160517080926/http://www.hcios.com/?p=1043" target="_blank">UINavigationController介绍：2-控制器跳转 </a></li></p>
+<p><li><a title="UINavigationController介绍：3-UINavigationBar" href="/web/20160517080926/http://www.hcios.com/?p=1046" target="_blank">UINavigationController介绍：3-UINavigationBar</a></li></p>
+<p><li><a title="UINavigationController介绍：4-UINavigationItem" href="/web/20160517080926/http://www.hcios.com/?p=1055" target="_blank">UINavigationController介绍：4-UINavigationItem</a></li></p>
+<p><li><a title="UINavigationController介绍：5-代理方法" href="/web/20160517080926/http://www.hcios.com/?p=1072" target="_blank">UINavigationController介绍：5-代理方法</a></li></p>
+<p><li><a title="UINavigationController介绍：6-自定义导航栏（锤子便签）" href="/web/20160517080926/http://www.hcios.com/?p=1090" target="_blank">UINavigationController介绍：6-自定义导航栏（锤子便签）</a></li></p>
+<p><li><a title="UINavigationController介绍：7-子控制器间的数据传递" href="/web/20160517080926/http://www.hcios.com/?p=1103" target="_blank">UINavigationController介绍：7-子控制器间的数据传递 </a></li></p>
+<p><li><a title="UINavigationController介绍：8-toolbar（工具栏）" href="/web/20160517080926/http://www.hcios.com/?p=1192" target="_blank">UINavigationController介绍：8-toolbar（工具栏） </a></li><br></p>
+<p></p><h3>UITabBarController</h3><p></p>
+<p><ul></ul></p>
+<p><li><a title="UITabBarController使用介绍之一：UITabBar简介" href="/web/20160517080926/http://www.hcios.com/?p=892" target="_blank">UITabBarController使用介绍之一：UITabBar简介</a></li></p>
+<p><li><a title="UITabBarController使用介绍之二：UITabBar代理方法实现不同视图切换" href="/web/20160517080926/http://www.hcios.com/?p=945" target="_blank">UITabBarController使用介绍之二：UITabBar代理方法实现不同视图切换</a></li></p>
+<p><li><a title="UITabBarController使用介绍之三：切换控制器" href="/web/20160517080926/http://www.hcios.com/?p=1003" target="_blank">UITabBarController使用介绍之三：切换控制器</a></li></p>
+<p><li><a title="UITabBarController使用介绍之四：TabBarController的属性及其代理" href="/web/20160517080926/http://www.hcios.com/?p=1027" target="_blank">UITabBarController使用介绍之四：TabBarController的属性及其代理</a></li><br></p>
+<p></p><h2>四、多线程与网络编程</h2><p></p>
+<p></p><h3>线程基础与NSThread</h3><p></p>
+<p><ul></ul></p>
+<p><li><a title="线程（Thread）基础知识" href="/web/20160517080926/http://www.hcios.com/archives/2433" target="_blank">线程（Thread）基础知识 </a></li><br></p>
+<p></p><h3>GCD</h3><p></p>
+<p><ul></ul></p>
+<p><li><a title="GCD使用介绍：1-基本使用" href="/web/20160517080926/http://www.hcios.com/archives/2454" target="_blank">GCD使用介绍：1-基本使用 </a></li></p>
+<p><li><a title="GCD使用介绍：2-线程间通信" href="/web/20160517080926/http://www.hcios.com/archives/2483" target="_blank">GCD使用介绍：2-线程间通信 </a></li></p>
+<p><li><a title="GCD使用介绍：3-队列组dispatch group" href="/web/20160517080926/http://www.hcios.com/archives/2495" target="_blank">GCD使用介绍：3-队列组dispatch group </a></li></p>
+<p><li><a title="GCD使用介绍：4-延迟执行操作" href="/web/20160517080926/http://www.hcios.com/archives/2505" target="_blank">GCD使用介绍：4-延迟执行操作 </a></li><br></p>
+<p></p><h3>NSOperation</h3><p></p>
+<p><ul></ul></p>
+<p><li><a title="NSOperation介绍：1-基本使用" href="/web/20160517080926/http://www.hcios.com/archives/2552" target="_blank">NSOperation介绍：1-基本使用</a></li></p>
+<p><li><a title="NSOperation介绍：2-线程间通信" href="/web/20160517080926/http://www.hcios.com/archives/2563" target="_blank">NSOperation介绍：2-线程间通信</a></li></p>
+<p><li><a title="NSOperation介绍：3-任务间的执行依赖" href="/web/20160517080926/http://www.hcios.com/archives/2570" target="_blank">NSOperation介绍：3-任务间的执行依赖</a></li><br></p>
+<p></p><h3>网络编程基础</h3><p></p>
+<p><ul></ul></p>
+<p><li> <a title="iOS开发之网络编程篇一：网络开发基本概念介绍" href="/web/20160517080926/http://www.hcios.com/?p=1191" target="_blank">iOS开发之网络编程篇一：网络开发基本概念介绍</a></li></p>
+<p><li><a title="iOS开发之网络编程篇二：Get，Post请求差异及用法" href="/web/20160517080926/http://www.hcios.com/?p=1207" target="_blank">iOS开发之网络编程篇二：Get，Post请求差异及用法</a></li></p>
+<p><li><a title="iOS开发之网络编程篇三：同步，异步请求差异及用法" href="/web/20160517080926/http://www.hcios.com/?p=1226" target="_blank">iOS开发之网络编程篇三：同步，异步请求差异及用法 </a></li></p>
+<p><li><a title="iOS开发之网络编程篇四：XML，JSon解析" href="/web/20160517080926/http://www.hcios.com/?p=1237" target="_blank">iOS开发之网络编程篇四：XML，JSon解析 </a></li></p>
+<p><li><a title="iOS开发之网络编程篇五：常用网络内部类" href="/web/20160517080926/http://www.hcios.com/archives/1378" target="_blank">iOS开发之网络编程篇五：常用网络内部类</a></li></p>
+<p><li><a title="iOS开发之网络编程篇六：AFNetworking3.0使用简介" href="/web/20160517080926/http://www.hcios.com/archives/1406" target="_blank">iOS开发之网络编程篇六：AFNetworking3.0使用简介</a></li></p>
+<p><li><a title="iOS开发之网络编程篇七：常用网络协议" href="/web/20160517080926/http://www.hcios.com/archives/1547" target="_blank">iOS开发之网络编程篇七：常用网络协议</a></li></p>
+<p><li><a title="iOS开发之网络编程篇八：Socket网络编程" href="/web/20160517080926/http://www.hcios.com/archives/1607" target="_blank">iOS开发之网络编程篇八：Socket网络编程</a></li><br></p>
+<p></p><h3>网络编程进阶</h3><p></p>
+<p><ul></ul></p>
+<p><li><a title="iOS网络状态监测之Reachability的使用" href="/web/20160517080926/http://www.hcios.com/archives/1313" target="_blank">iOS网络状态监测之Reachability的使用</a></li><br></p>
+<p></p><h3>网络数据获取与解析实践</h3><p></p>
+<p><ul></ul></p>
+<p><li><a title="聚合数据API用法简介 - 宏创学院" href="/web/20160517080926/http://www.hcios.com/archives/572" target="_blank">聚合数据API用法简介</a></li></p>
+<p><li><a title="聚合数据使用之：数据的获取与解析（JSON篇） - 宏创学院" href="/web/20160517080926/http://www.hcios.com/archives/2026" target="_blank">聚合数据使用之：数据的获取与解析（JSON篇）</a></li></p>
+<p><li><a title="聚合数据使用之：数据的获取与解析（XML篇） - 宏创学院" href="/web/20160517080926/http://www.hcios.com/archives/2068" target="_blank">聚合数据使用之：数据的获取与解析（XML篇）</a></li><br></p>
+<p></p><h2>五、数据持久化</h2><p></p>
+<p></p><h3>沙盒</h3><p></p>
+<p><ul></ul></p>
+<p><li><a title="数据持久化基础知识之 — 沙盒" href="/web/20160517080926/http://www.hcios.com/?p=981" target="_blank">数据持久化基础知识之 — 沙盒</a></li><br></p>
+<p></p><h3> Plist</h3><p></p>
+<p><ul></ul></p>
+<p><li><a title="iOS 数据持久化之——Plist" href="/web/20160517080926/http://www.hcios.com/?p=748" target="_blank">iOS 数据持久化之——Plist</a></li></p>
+<p><li><a title="iOS 数据持久化之 — Plist开发实践进阶" href="/web/20160517080926/http://www.hcios.com/?p=1324" target="_blank">iOS 数据持久化之 — Plist开发实践进阶</a></li><br></p>
+<p></p><h3>偏好设置</h3><p></p>
+<p><ul></ul></p>
+<p><li><a title="iOS数据持久化之——偏好设置" href="/web/20160517080926/http://www.hcios.com/?p=757" target="_blank">iOS数据持久化之——偏好设置</a></li><br></p>
+<p></p><h3>归档</h3><p></p>
+<p><ul></ul></p>
+<p><li><a title="iOS数据持久化之——归档" href="/web/20160517080926/http://www.hcios.com/?p=766" target="_blank">iOS数据持久化之——归档 </a></li><br></p>
+<p></p><h3>SQLite</h3><p></p>
+<p><ul></ul></p>
+<p><li><a title="SQLite 3（一）——使用介绍" href="/web/20160517080926/http://www.hcios.com/?p=782" target="_blank">SQLite 3（一）——使用介绍</a></li></p>
+<p><li><a title="SQLite 3（二）——基本操作" href="/web/20160517080926/http://www.hcios.com/?p=891" target="_blank">SQLite 3（二）——基本操作</a></li></p>
+<p><li><a title="FMDB（一）——简介" href="/web/20160517080926/http://www.hcios.com/?p=921" target="_blank">FMDB（一）——简介 </a></li></p>
+<p><li><a title="FMDB（二）— 基本使用方法" href="/web/20160517080926/http://www.hcios.com/?p=938" target="_blank">FMDB（二）— 基本使用方法</a></li></p>
+<p><li><a title="FMDB（三）— 多线程下的使用" href="/web/20160517080926/http://www.hcios.com/?p=1013" target="_blank">FMDB（三）— 多线程下的使用</a></li><br></p>
+<p></p><h3>CoreData</h3><p></p>
+<p><ul></ul></p>
+<p><li><a title="CoreData （一） — 简介" href="/web/20160517080926/http://www.hcios.com/archives/1442" target="_blank">CoreData （一） — 简介</a></li></p>
+<p><li><a title="Coredata （二）— 入门使用" href="/web/20160517080926/http://www.hcios.com/archives/1468" target="_blank">Coredata （二）— 入门使用 </a></li></p>
+<p><li><a title="CoreData进阶之 — NSFetchedResultsController" href="/web/20160517080926/http://www.hcios.com/archives/1538" target="_blank">CoreData进阶之 — NSFetchedResultsController</a></li><br></p>
+<p></p><h2>六、设备调用</h2><p></p>
+<p></p><h3>相机与相册</h3><p></p>
+<p><ul></ul></p>
+<p><li><a title="iOS相机相册调用 — UIImagePickerController" href="/web/20160517080926/http://www.hcios.com/archives/2784" target="_blank">iOS相机相册调用 — UIImagePickerController</a></li><br></p>
+<p></p><h3>地图</h3><p></p>
+<p><ul></ul></p>
+<p><li><a title="Map Kit API介绍之一－MKMapView" href="/web/20160517080926/http://www.hcios.com/archives/2656" target="_blank">Map Kit API介绍之一－MKMapView </a></li></p>
+<p><li><a title="Map Kit API介绍之二：添加标注" href="/web/20160517080926/http://www.hcios.com/archives/2756" target="_blank">Map Kit API介绍之二：添加标注 </a></li></p>
+<p><li><a title="定位服务之一－Core Location框架" href="/web/20160517080926/http://www.hcios.com/archives/2682" target="_blank">定位服务之一－Core Location框架 </a></li></p>
+<p><li><a title="定位服务之二－地理信息反编码" href="/web/20160517080926/http://www.hcios.com/archives/2728" target="_blank">定位服务之二－地理信息反编码 </a></li></p>
+<p><li><a title="定位服务之三－地理信息编码查询" href="/web/20160517080926/http://www.hcios.com/archives/2743" target="_blank">定位服务之三－地理信息编码查询 </a></li></p>
+<p><li><a title="高德地图SDK使用简介" href="/web/20160517080926/http://www.hcios.com/archives/2781" target="_blank">高德地图SDK使用简介 </a></li><br></p>
+<p></p><h3>CoreMotion运动传感器</h3><p></p>
+<p><ul></ul></p>
+<p><li><a title="CoreMotion框架：1-基本介绍" href="/web/20160517080926/http://www.hcios.com/archives/2261" target="_blank">CoreMotion框架：1-基本介绍 </a></li></p>
+<p><li><a title="CoreMotion框架：2-获取运动传感器的裸数据(Raw Data)" href="/web/20160517080926/http://www.hcios.com/archives/2274" target="_blank">CoreMotion框架：2-获取运动传感器的裸数据(Raw Data) </a></li></p>
+<p><li><a title="CoreMotion框架：3-CMDeviceMotion" href="/web/20160517080926/http://www.hcios.com/archives/2277" target="_blank">CoreMotion框架：3-CMDeviceMotion </a></li><br></p>
+<p></p><h3>UIDevice</h3><p></p>
+<p><ul></ul></p>
+<p><li><a title="UIDevice类：1-获取设备基本信息" href="/web/20160517080926/http://www.hcios.com/archives/2327" target="_blank">UIDevice类：1-获取设备基本信息 </a></li></p>
+<p><li><a title="UIDevice类：2-获取电池信息batteryState" href="/web/20160517080926/http://www.hcios.com/archives/2334" target="_blank">UIDevice类：2-获取电池信息batteryState </a></li></p>
+<p><li><a title="UIDevice类：3-接近传感器proximityState" href="/web/20160517080926/http://www.hcios.com/archives/2345" target="_blank">UIDevice类：3-接近传感器proximityState </a></li></p>
+<p><li><a title="UIDevice类：4-方向传感器orientation" href="/web/20160517080926/http://www.hcios.com/archives/2347" target="_blank">UIDevice类：4-方向传感器orientation </a></li><br></p>
+<p></p><h3>电话、短信与邮件应用的调用</h3><p></p>
+<p><ul></ul></p>
+<p><li><a title="iOS 系统应用调用:  电话、短信息、邮件" href="/web/20160517080926/http://www.hcios.com/archives/2442" target="_blank">iOS 系统应用调用: 电话、短信息、邮件 </a></li><br></p>
+<p></p><h2>七、动画基础</h2><p></p>
+<p></p><h3> 核心绘图Core Graphics</h3><p></p>
+<p><ul></ul></p>
+<p><li><a title="核心绘图CoreGraphics：1-基础概念" href="/web/20160517080926/http://www.hcios.com/archives/2142" target="_blank">核心绘图CoreGraphics：1-基础概念</a></li></p>
+<p><li><a title="核心绘图CoreGraphics：2-使用贝塞尔路径UIBezierPath绘图" href="/web/20160517080926/http://www.hcios.com/archives/2156" target="_blank">核心绘图CoreGraphics：2-使用贝塞尔路径UIBezierPath绘图</a></li></p>
+<p><li><a title="核心绘图CoreGraphics：3-涂鸦应用" href="/web/20160517080926/http://www.hcios.com/archives/2224" target="_blank">核心绘图CoreGraphics：3-涂鸦应用 </a></li><br></p>
+<p></p><h3>UIImage与绘图</h3><p></p>
+<p><ul></ul></p>
+<p><li><a title="UIImage与绘图：1-绘制图片" href="/web/20160517080926/http://www.hcios.com/archives/2177" target="_blank">UIImage与绘图：1-绘制图片</a></li></p>
+<p><li><a title="UIImage与绘图：2-添加水印" href="/web/20160517080926/http://www.hcios.com/archives/2184" target="_blank">UIImage与绘图：2-添加水印</a></li></p>
+<p><li><a title="UIImage与绘图：3-裁剪圆形图片" href="/web/20160517080926/http://www.hcios.com/archives/2197" target="_blank">UIImage与绘图：3-裁剪圆形图片 </a></li></p>
+<p><li><a title="UIImage与绘图：4-截屏" href="/web/20160517080926/http://www.hcios.com/archives/2206" target="_blank">UIImage与绘图：4-截屏</a></li><br></p>
+<p></p><h3>CALayer基本介绍</h3><p></p>
+<p><ul></ul></p>
+<p><li><a title="CALayer之一－基本介绍" href="/web/20160517080926/http://www.hcios.com/archives/2148" target="_blank">CALayer之一－基本介绍</a></li></p>
+<p><li><a title="CALayer之二－隐式动画" href="/web/20160517080926/http://www.hcios.com/archives/2193" target="_blank">CALayer之二－隐式动画</a></li><br></p>
+<p></p><h3>核心动画Core Animation</h3><p></p>
+<p><ul></ul></p>
+<p><li><a title="CoreAnimation之一－基本介绍" href="/web/20160517080926/http://www.hcios.com/archives/2220" target="_blank">CoreAnimation之一－基本介绍 </a></li></p>
+<p><li><a title="CoreAnimation之二－关键帧动画" href="/web/20160517080926/http://www.hcios.com/archives/2297" target="_blank">CoreAnimation之二－关键帧动画 </a></li></p>
+<p><li><a title="CoreAnimation之三－动画组" href="/web/20160517080926/http://www.hcios.com/archives/2312" target="_blank">CoreAnimation之三－动画组 </a></li></p>
+<p><li><a title="CoreAnimation之四－转场动画" href="/web/20160517080926/http://www.hcios.com/archives/2317" target="_blank">CoreAnimation之四－转场动画 </a></li><br></p>
+<p></p><h2>八、高级知识点</h2><p></p>
+<p></p><h3>3D Touch</h3><p></p>
+<p><ul></ul></p>
+<p><li><a title="3D Touch 使用：Quick Action（Short Cut）" href="/web/20160517080926/http://www.hcios.com/?p=191" target="_blank">3D Touch 使用：Quick Action（Short Cut）</a></li></p>
+<p><li><a title="3D Touch 使用：Peek 和 Pop" href="/web/20160517080926/http://www.hcios.com/?p=198" target="_blank">3D Touch 使用：Peek 和 Pop</a></li><br></p>
+<p></p><h3>扫描二维码</h3><p></p>
+<p><ul></ul></p>
+<p><li><a title="iOS扫描二维码" href="/web/20160517080926/http://www.hcios.com/?p=422">iOS扫描二维码</a></li><br></p>
+<p></p><h3>消息推送</h3><p></p>
+<p><ul></ul></p>
+<p><li><a title="友盟消息推送SDK集成" href="/web/20160517080926/http://www.hcios.com/?p=1255" target="_blank">友盟消息推送SDK集成</a></li></p>
+<p><li><a title="iOS 开发之 — 本地推送" href="/web/20160517080926/http://www.hcios.com/archives/1616" target="_blank">iOS 开发之 — 本地推送</a></li></p>
+<p><li><a title="由推送消息跳转入指定控制器" href="/web/20160517080926/http://www.hcios.com/archives/1718" target="_blank">由推送消息跳转入指定控制器</a></li><br></p>
+<p></p><h3>苹果证书管理</h3><p></p>
+<p><ul></ul></p>
+<p><li><a title="苹果证书管理之一：开发证书(调试证书)" href="/web/20160517080926/http://www.hcios.com/?p=1264" target="_blank">苹果证书管理之一：开发证书(调试证书)</a></li></p>
+<p><li><a title="苹果证书管理之二：发布证书" href="/web/20160517080926/http://www.hcios.com/archives/1357" target="_blank">苹果证书管理之二：发布证书</a></li></p>
+<p><li><a title="苹果证书管理之三：推送证书" href="/web/20160517080926/http://www.hcios.com/archives/1364" target="_blank">苹果证书管理之三：推送证书</a></li><br></p>
+<p></p><h3>App应用发布</h3><p></p>
+<p><ul></ul></p>
+<p><li><a title="iOS App上线发布流程" href="/web/20160517080926/http://www.hcios.com/archives/1336" target="_blank">iOS App上线发布流程</a></li><br></p>
+<p></p><h3>生命周期</h3><p></p>
+<p><ul></ul></p>
+<p><li><a title="App的生命周期" href="/web/20160517080926/http://www.hcios.com/archives/1728" target="_blank">App的生命周期</a></li><br></p>
+<p></p><h2>九、最佳实践</h2><p></p>
+<p></p><h3>优秀第三方SDK</h3><p></p>
+<p><ul></ul></p>
+<p><li><a title="App中短信验证功能实现（免费短信）" href="/web/20160517080926/http://www.hcios.com/?p=238" target="_blank">App中短信验证功能实现（免费短信）</a></li></p>
+<p><li><a title="网易滚动导航栏——（第三方框架实现）" href="/web/20160517080926/http://www.hcios.com/?p=646" target="_blank">网易滚动导航栏——（第三方框架实现）</a></li></p>
+<p><li><a title="UIWebView介绍：4-利用第三方框架实现加载进度条" href="/web/20160517080926/http://www.hcios.com/?p=775" target="_blank">UIWebView介绍：4-利用第三方框架实现加载进度条</a></li></p>
+<p><li><a title="AMScrollingNavbar框架(自动隐藏导航栏)使用简介" href="/web/20160517080926/http://www.hcios.com/archives/2112" target="_blank">AMScrollingNavbar框架(自动隐藏导航栏)使用简介</a></li><br></p>
+<p></p><h3>其他</h3><p></p>
+<p><ul></ul></p>
+<p><li><a title="iOS UI开发辅助利器：Reveal使用" href="/web/20160517080926/http://www.hcios.com/?p=271"> iOS UI开发辅助利器：Reveal使用</a></li></p>
+<p><li><a title="Reveal逆向工程：分析任意iOS应用的UI界面" href="/web/20160517080926/http://www.hcios.com/?p=338" target="_blank">Reveal逆向工程：分析任意iOS应用的UI界面</a></li></p>
+<p><li><a title="Uber/优步App动画效果启动页实现" href="/web/20160517080926/http://www.hcios.com/?p=233" target="_blank">Uber/优步App动画效果启动页实现</a></li></p>
+<p><li><a title="RTImageAssets：自动生成全尺寸icon以及2x/3x图片" href="/web/20160517080926/http://www.hcios.com/?p=437" target="_blank">RTImageAssets：自动生成全尺寸icon以及2x/3x图片</a></li></p>
+<p><li><a title="iOS新建项目架构规范" href="/web/20160517080926/http://www.hcios.com/?p=491" target="_blank">iOS新建项目架构规范</a></li></p>
+<p><li><a title="提示框框架KVNProgress介绍" href="/web/20160517080926/http://www.hcios.com/archives/1954" target="_blank">提示框框架KVNProgress介绍</a></li><br></p>
+<p> </p><br><p>转载请注明：<a href="/web/20160517080926/http://www.hcios.com/">宏创学院</a> » <a href="/web/20160517080926/http://www.hcios.com/archives/274">iOS9开发入门教程索引(从这里起步，从零开始学习吧)</a></p>
+
+
+<div class="article-social"><br>            <a href="javascript:;" data-action="ding" data-id="274" id="Addlike" class="action" target="_blank" rel="external"><i class="fa fa-heart-o"></i>喜欢 (<span class="count">25</span>)</a><span class="or">or</span><span class="action action-share bdsharebuttonbox"><i class="fa fa-share-alt"></i>分享 (<span class="bds_count" data-cmd="count" title="累计分享0次">0</span>)<div class="action-popover"><div class="popover top in"><div class="arrow"></div><div class="popover-content"><a href="#" class="sinaweibo fa fa-weibo" data-cmd="tsina" title="分享到新浪微博"></a><a href="#" class="bds_qzone fa fa-star" data-cmd="qzone" title="分享到QQ空间"></a><a href="#" class="tencentweibo fa fa-tencent-weibo" data-cmd="tqq" title="分享到腾讯微博"></a><a href="#" class="qq fa fa-qq" data-cmd="sqq" title="分享到QQ好友"></a><a href="#" class="bds_renren fa fa-renren" data-cmd="renren" title="分享到人人网"></a><a href="#" class="bds_weixin fa fa-weixin" data-cmd="weixin" title="分享到微信"></a><a href="#" class="bds_more fa fa-ellipsis-h" data-cmd="more"></a></div></div></div></span><br></div>
+
+      
+    </div>
+    <footer class="article-footer">
+      <a data-url="http://yoursite.com/2017/01/12/22eafc1b7c675e42f69841d68421680d/" data-id="cixuey488000502pjbhxzup2y" class="article-share-link">Share</a>
+      
+      
+    </footer>
+  </div>
+  
+</article>
+
+
+  
+    <article id="post-2b77d7c563c06cfeecdd856dbe0d907f" class="article article-type-post" itemscope itemprop="blogPost">
+  <div class="article-meta">
+    <a href="/2017/01/12/2b77d7c563c06cfeecdd856dbe0d907f/" class="article-date">
+  <time datetime="2017-01-12T13:30:16.096Z" itemprop="datePublished">2017-01-12</time>
+</a>
+    
+  </div>
+  <div class="article-inner">
+    
+    
+    <div class="article-entry" itemprop="articleBody">
+      
+        <pre><code>&lt;header&gt;&lt;a class=&quot;label label-important&quot; href=&quot;/web/20160517080939/http://www.hcios.com/archives/category/kfrm&quot;&gt;iOS入门&lt;i class=&quot;label-arrow&quot;&gt;&lt;/i&gt;&lt;/a&gt;&lt;h2&gt;&lt;a target=&quot;_blank&quot; href=&quot;/web/20160517080939/http://www.hcios.com/archives/1043&quot; title=&quot;UINavigationController介绍：2-控制器跳转&quot;&gt;UINavigationController介绍：2-控制器跳转  &lt;/a&gt;&lt;/h2&gt;
+&lt;/header&gt;
+&lt;div class=&quot;focus&quot;&gt;&lt;a target=&quot;_blank&quot; href=&quot;/web/20160517080939/http://www.hcios.com/archives/1043&quot;&gt;&lt;img class=&quot;thumb&quot; src=&quot;/web/20160517080939im_/http://www.hcios.com/wp-content/themes/yusi1.0/timthumb.php?src=http://www.hcios.com/wp-content/uploads/2016/01/002-UI-UX-design-2014.jpg&amp;amp;h=123&amp;amp;w=200&amp;amp;q=90&amp;amp;zc=1&amp;amp;ct=1&quot; alt=&quot;UINavigationController介绍：2-控制器跳转&quot;/&gt;&lt;/a&gt;&lt;/div&gt;
+        &lt;span class=&quot;note&quot;&gt; 导航控制器最核心的功能就是控制各个子控制器之间进行跳转，在导航控制器的类中，提供了若干个管理子控制器以及跳转控制器的方法，需要重点掌握。
+</code></pre><p>1、控制器跳转<br>导航控制器的定义中，提供了Push与Pop的方法，来实现子控制器之间的跳转，其中：Push对应入栈操作，Pop对应出栈操作。<br>…</p>
+<p class="auth-span"><br>        <span class="muted"><i class="fa fa-user"></i> <a href="/web/20160517080939/http://www.hcios.com/archives/author/hcios">宏创学院</a></span><br>        <span class="muted"><i class="fa fa-clock-o"></i> 4个月前 (01-04)</span>    <span class="muted"><i class="fa fa-eye"></i> 524℃</span>    <span class="muted"><br><a href="javascript:;" data-action="ding" data-id="1043" id="Addlike" class="action" target="_blank" rel="external"><i class="fa fa-heart-o"></i><span class="count">3</span>喜欢</a></span></p>
+
+      
+    </div>
+    <footer class="article-footer">
+      <a data-url="http://yoursite.com/2017/01/12/2b77d7c563c06cfeecdd856dbe0d907f/" data-id="cixuey48b000602pjx44d7fwd" class="article-share-link">Share</a>
+      
+      
+    </footer>
+  </div>
+  
+</article>
+
+
+  
+    <article id="post-0c5b062ce46a4a937b5a521e4524aa82" class="article article-type-post" itemscope itemprop="blogPost">
+  <div class="article-meta">
+    <a href="/2017/01/12/0c5b062ce46a4a937b5a521e4524aa82/" class="article-date">
+  <time datetime="2017-01-12T13:30:16.096Z" itemprop="datePublished">2017-01-12</time>
+</a>
+    
+  </div>
+  <div class="article-inner">
+    
+    
+    <div class="article-entry" itemprop="articleBody">
+      
+        <pre><code>&lt;header&gt;&lt;a class=&quot;label label-important&quot; href=&quot;/web/20160515031343/http://www.hcios.com/archives/category/ocjc&quot;&gt;OC基础&lt;i class=&quot;label-arrow&quot;&gt;&lt;/i&gt;&lt;/a&gt;&lt;h2&gt;&lt;a target=&quot;_blank&quot; href=&quot;/web/20160515031343/http://www.hcios.com/archives/1878&quot; title=&quot;方法Method介绍：1-方法的定义&quot;&gt;方法Method介绍：1-方法的定义  &lt;/a&gt;&lt;/h2&gt;
+&lt;/header&gt;
+&lt;div class=&quot;focus&quot;&gt;&lt;a target=&quot;_blank&quot; href=&quot;/web/20160515031343/http://www.hcios.com/archives/1878&quot;&gt;&lt;img class=&quot;thumb&quot; src=&quot;/web/20160515031343im_/http://www.hcios.com/wp-content/themes/yusi1.0/timthumb.php?src=http://www.hcios.com/wp-content/uploads/2016/02/15408119250915459952.jpg&amp;amp;h=123&amp;amp;w=200&amp;amp;q=90&amp;amp;zc=1&amp;amp;ct=1&quot; alt=&quot;方法Method介绍：1-方法的定义&quot;/&gt;&lt;/a&gt;&lt;/div&gt;
+        &lt;span class=&quot;note&quot;&gt; 在iOS开发中，通过将一则消息message发送给一个对象（称为为消息的接收者receiver），可以调用该对象的一个方法。在Objective-C中，有两种类型的方法，实例方法与类方法。
+</code></pre><p>1、有关方法的基本概念<br>[receiver message];//消息传递模型<br>消息mes…</p>
+<p class="auth-span"><br>        <span class="muted"><i class="fa fa-user"></i> <a href="/web/20160515031343/http://www.hcios.com/archives/author/hcios">宏创学院</a></span><br>        <span class="muted"><i class="fa fa-clock-o"></i> 3个月前 (02-19)</span>    <span class="muted"><i class="fa fa-eye"></i> 403℃</span>    <span class="muted"><br><a href="javascript:;" data-action="ding" data-id="1878" id="Addlike" class="action" target="_blank" rel="external"><i class="fa fa-heart-o"></i><span class="count">2</span>喜欢</a></span></p>
+
+      
+    </div>
+    <footer class="article-footer">
+      <a data-url="http://yoursite.com/2017/01/12/0c5b062ce46a4a937b5a521e4524aa82/" data-id="cixuey47q000002pjidl76h0s" class="article-share-link">Share</a>
+      
+      
+    </footer>
+  </div>
+  
+</article>
+
+
+  
+    <article id="post-1ea5ca1b287e8a4fdacc1f3d8d3c48f3" class="article article-type-post" itemscope itemprop="blogPost">
+  <div class="article-meta">
+    <a href="/2017/01/12/1ea5ca1b287e8a4fdacc1f3d8d3c48f3/" class="article-date">
+  <time datetime="2017-01-12T13:30:16.096Z" itemprop="datePublished">2017-01-12</time>
+</a>
+    
+  </div>
+  <div class="article-inner">
+    
+    
+    <div class="article-entry" itemprop="articleBody">
+      
+        <p>Uber/优步App动画效果启动页实现</p>
+<pre><code>&lt;blockquote&gt;&lt;p&gt;国内外越来越多的App的登陆页采用了动态背景的显示方式，感觉是在播放一个视频，给用户提供了更好的体验，如Uber/优步。本文带领大家来实现一个具有动态背景的登陆页/启动页。&lt;/p&gt;&lt;/blockquote&gt;
+</code></pre><div style="width: 640px; " class="wp-video"><!--[if lt IE 9]><script>document.createElement('video');</script><![endif]--><br><video class="wp-video-shortcode" id="video-233-1" width="640" height="360" preload="metadata" controls="controls"><source type="video/mp4" src="http://7xow58.media1.z0.glb.clouddn.com/6/Uber%E5%90%AF%E5%8A%A8%E9%A1%B5.mp4?_=1"><a href="/web/20160516005736/http://7xow58.media1.z0.glb.clouddn.com/6/Uber%E5%90%AF%E5%8A%A8%E9%A1%B5.mp4">http://7xow58.media1.z0.glb.clouddn.com/6/Uber%E5%90%AF%E5%8A%A8%E9%A1%B5.mp4</a></video></div><br><h2>一、样式展示</h2><br><p style="text-align: center"><a href="/web/20160516005736/http://7xow65.com1.z0.glb.clouddn.com/wp-content/uploads/2015/11/2015-11-16-10_14_44.gif"><img class="alignnone size-full wp-image-234" src="/web/20160516005736im_/http://7xow65.com1.z0.glb.clouddn.com/wp-content/uploads/2015/11/2015-11-16-10_14_44.gif" alt="2015-11-16 10_14_44" width="300" height="533"></a></p><br><h2>二、实现方法</h2><br><h3>2.1 实现思路</h3><br><p>我首先想到的是，创建一个视频播放器并且让这个视频文件在背景视图上重复播放。但是我还要放其他控件到视图上面，而且我也不需要视频的声音。然后我想到了GIF文件。现在的问题是：要怎么样把一个GIF放到一个视图上去？据我所知，UIImageView和UIImage都不支持GIF动画。尽管UIImageView可以通过添加多张图片和动画结合的方式来实现，我们真的需要从视频中截取大量的图片并把所有的这些图片全都添加到工程中吗？这样制作视频的工作准备未免太复杂了。那还有什么支持GIF呢？答案是UIWebView。</p><br><h3>2.2 准备GIF</h3><br><p>大家可以自行录制一段视频或者到网上找一段视频，接下来就需要把视频文件转换成GIF。这里给大家推荐一个转换软件：GIFBrewery。有关GIFBrewery的使用方法，可以看我们的视频。 <a href="/web/20160516005736/http://7xow65.com1.z0.glb.clouddn.com/wp-content/uploads/2015/11/QQ20151116-0@2x.png"><img class="alignnone size-full wp-image-236" src="/web/20160516005736im_/http://7xow65.com1.z0.glb.clouddn.com/wp-content/uploads/2015/11/QQ20151116-0@2x.png" alt="QQ20151116-0@2x" width="744" height="431"></a></p><br><p> </p><br><h3>2.3 代码实现</h3><br><ul><br><li>在StoryBoard中添加一个UIWebView控件，并连线；</li><br><li>初始化UIWebView对象，添加GIF文件；</li><br><li>创建一个灰色的蒙版，提升效果（可选）；</li><br><li>修改登录按钮和注册按钮的显示层级。</li><br></ul><br><pre class="prettyprint linenums">@interface ViewController ()<br>@property (weak, nonatomic) IBOutlet UIWebView <em>webViewBG;<br>@property (weak, nonatomic) IBOutlet UIButton </em>regBtn;<br>@property (weak, nonatomic) IBOutlet UIButton <em>loginBtn;<br>@end<br><br>@implementation ViewController<br><br>- (void)viewDidLoad {<br>    [super viewDidLoad];<br><br>    //初始化UIWebView对象，添加GIF文件<br>    NSString </em>filePath = [[NSBundle mainBundle] pathForResource:@&#34;bg&#34; ofType:@&#34;gif&#34;];<br>    NSData <em>gif =[NSData dataWithContentsOfFile:filePath];<br>    [self.webViewBG loadData:gif MIMEType:@&#34;image/gif&#34; textEncodingName:nil baseURL:nil];<br>    self.webViewBG.userInteractionEnabled = NO;<br><br>    //创建一个灰色的蒙版，提升效果（可选）<br>    UIView </em>filter = [[UIView alloc] initWithFrame:self.view.bounds];<br>    filter.backgroundColor = [UIColor blackColor];<br>    filter.alpha = 0.5;<br>    [self.view addSubview:filter];<br><br>    //修改登录按钮和注册按钮的显示层级<br>    [self.view bringSubviewToFront:self.loginBtn];<br>    [self.view bringSubviewToFront:self.regBtn];<br><br>}<br><br>@end<br></pre><br><p> </p><br><p> </p><br><p>转载请注明：<a href="/web/20160516005736/http://www.hcios.com/">宏创学院</a> » <a href="/web/20160516005736/http://www.hcios.com/archives/233">Uber/优步App动画效果启动页实现</a></p><br><br><br><div class="article-social"><br>            <a href="javascript:;" data-action="ding" data-id="233" id="Addlike" class="action" target="_blank" rel="external"><i class="fa fa-heart-o"></i>喜欢 (<span class="count">5</span>)</a><span class="or">or</span><span class="action action-share bdsharebuttonbox"><i class="fa fa-share-alt"></i>分享 (<span class="bds_count" data-cmd="count" title="累计分享0次">0</span>)<div class="action-popover"><div class="popover top in"><div class="arrow"></div><div class="popover-content"><a href="#" class="sinaweibo fa fa-weibo" data-cmd="tsina" title="分享到新浪微博"></a><a href="#" class="bds_qzone fa fa-star" data-cmd="qzone" title="分享到QQ空间"></a><a href="#" class="tencentweibo fa fa-tencent-weibo" data-cmd="tqq" title="分享到腾讯微博"></a><a href="#" class="qq fa fa-qq" data-cmd="sqq" title="分享到QQ好友"></a><a href="#" class="bds_renren fa fa-renren" data-cmd="renren" title="分享到人人网"></a><a href="#" class="bds_weixin fa fa-weixin" data-cmd="weixin" title="分享到微信"></a><a href="#" class="bds_more fa fa-ellipsis-h" data-cmd="more"></a></div></div></div></span><br></div>
+
+      
+    </div>
+    <footer class="article-footer">
+      <a data-url="http://yoursite.com/2017/01/12/1ea5ca1b287e8a4fdacc1f3d8d3c48f3/" data-id="cixuey480000202pjypr5lu81" class="article-share-link">Share</a>
+      
+      
+    </footer>
+  </div>
+  
+</article>
+
+
+  
+    <article id="post-2b0c0adf04623ed3b39ea4bfe7b8c9d7" class="article article-type-post" itemscope itemprop="blogPost">
+  <div class="article-meta">
+    <a href="/2017/01/12/2b0c0adf04623ed3b39ea4bfe7b8c9d7/" class="article-date">
+  <time datetime="2017-01-12T13:30:16.096Z" itemprop="datePublished">2017-01-12</time>
+</a>
+    
+  </div>
+  <div class="article-inner">
+    
+    
+    <div class="article-entry" itemprop="articleBody">
+      
+        <p>UINavigationController介绍：2-控制器跳转</p>
+<pre><code>&lt;blockquote&gt;&lt;p&gt;导航控制器最核心的功能就是控制各个子控制器之间进行跳转，在导航控制器的类中，提供了若干个管理子控制器以及跳转控制器的方法，需要重点掌握。&lt;/p&gt;&lt;/blockquote&gt;
+</code></pre><p></p><h2>1、控制器跳转</h2><p></p>
+<p>导航控制器的定义中，提供了Push与Pop的方法，来实现子控制器之间的跳转，其中：Push对应入栈操作，Pop对应出栈操作。</p><br><pre class="prettyprint linenums">- (void)pushViewController:(UIViewController <em>)viewController animated:(BOOL)animated; // 入栈操作，显示新的子控制器<br><br>- (nullable UIViewController </em>)popViewControllerAnimated:(BOOL)animated;//出栈操作，显示栈顶的控制器<br>- (nullable NSArray <em>)popToViewController:(UIViewController </em>)viewController animated:(BOOL)animated; // 出栈操作，显示指定的控制器<br>- (nullable NSArray <em>)popToRootViewControllerAnimated:(BOOL)animated; // 出栈操作，显示导航控制器的根控制器</em></pre><br><h2>2、管理子控制器</h2><br><p>导航控制器对象中提供了属性，用于管理该导航控制器下的所有子控制器。</p><br><pre class="prettyprint linenums">@property(nonatomic,copy) NSArray viewControllers;//存放本导航控制器管理的所有子控制器<br>@property(nullable, nonatomic,readonly,strong) UIViewController <em>topViewController;//获取栈顶控制器<br></em></pre><br><h2> 3、UIViewController中有关导航控制器的属性</h2><br><p>在UIViewController对象中，可以获取到管理自身的导航控制器，通过该属性，任何一个子控制器，都可以随意管理由同一个导航控制器管理的其他子控制器。</p><br><pre class="prettyprint linenums">@interface UIViewController (UINavigationControllerItem)<br><br>@property(nonatomic,readonly,strong) UINavigationItem navigationItem; // 获取导航栏中的navigationItem<br>@property(nonatomic) BOOL hidesBottomBarWhenPushed __TVOS<em>PROHIBITED; // 隐藏底部Bar，常用于隐藏TabBar<br>@property(nullable, nonatomic,readonly,strong) UINavigationController *navigationController; // 获取导航控制器对象<br><br>@end<br></em></pre><br><h2>视频教程</h2><br><div style="width: 640px; " class="wp-video"><!--[if lt IE 9]><script>document.createElement('video');</script><![endif]--><br><video class="wp-video-shortcode" id="video-1043-1" width="640" height="360" preload="metadata" controls="controls">&lt;source type=”video/mp4” src=”<a href="http://7xow58.media1.z0.glb.clouddn.com/UINavigationController%E4%BB%8B%E7%BB%8D%EF%BC%9A2-%E6%8E%A7%E5%88%B6%E5%99%A8%E8%B7%B3%E8%BD%AC.mp4?" target="_blank" rel="external">http://7xow58.media1.z0.glb.clouddn.com/UINavigationController%E4%BB%8B%E7%BB%8D%EF%BC%9A2-%E6%8E%A7%E5%88%B6%E5%99%A8%E8%B7%B3%E8%BD%AC.mp4?</a>=1”/&gt;<a href="/web/20160317213508/http://7xow58.media1.z0.glb.clouddn.com/UINavigationController%E4%BB%8B%E7%BB%8D%EF%BC%9A2-%E6%8E%A7%E5%88%B6%E5%99%A8%E8%B7%B3%E8%BD%AC.mp4">http://7xow58.media1.z0.glb.clouddn.com/UINavigationController%E4%BB%8B%E7%BB%8D%EF%BC%9A2-%E6%8E%A7%E5%88%B6%E5%99%A8%E8%B7%B3%E8%BD%AC.mp4</a></video></div><br><p> </p><br><p>转载请注明：<a href="/web/20160317213508/http://www.hcios.com/">宏创学院</a> » <a href="/web/20160317213508/http://www.hcios.com/archives/1043">UINavigationController介绍：2-控制器跳转</a></p>
+
+
+<div class="article-social"><br>            <a href="javascript:;" data-action="ding" data-id="1043" id="Addlike" class="action" target="_blank" rel="external"><i class="fa fa-heart-o"></i>喜欢 (<span class="count">3</span>)</a><span class="or">or</span><span class="action action-share bdsharebuttonbox"><i class="fa fa-share-alt"></i>分享 (<span class="bds_count" data-cmd="count" title="累计分享0次">0</span>)<div class="action-popover"><div class="popover top in"><div class="arrow"></div><div class="popover-content"><a href="#" class="sinaweibo fa fa-weibo" data-cmd="tsina" title="分享到新浪微博"></a><a href="#" class="bds_qzone fa fa-star" data-cmd="qzone" title="分享到QQ空间"></a><a href="#" class="tencentweibo fa fa-tencent-weibo" data-cmd="tqq" title="分享到腾讯微博"></a><a href="#" class="qq fa fa-qq" data-cmd="sqq" title="分享到QQ好友"></a><a href="#" class="bds_renren fa fa-renren" data-cmd="renren" title="分享到人人网"></a><a href="#" class="bds_weixin fa fa-weixin" data-cmd="weixin" title="分享到微信"></a><a href="#" class="bds_more fa fa-ellipsis-h" data-cmd="more"></a></div></div></div></span><br></div>
+
+      
+    </div>
+    <footer class="article-footer">
+      <a data-url="http://yoursite.com/2017/01/12/2b0c0adf04623ed3b39ea4bfe7b8c9d7/" data-id="cixuey482000302pjynbc37kz" class="article-share-link">Share</a>
+      
+      
+    </footer>
+  </div>
+  
+</article>
+
+
+  
+
+
+  <nav id="page-nav">
+    <a class="extend prev" rel="prev" href="/page/2/">&laquo; __('prev')</a><a class="page-number" href="/">1</a><a class="page-number" href="/page/2/">2</a><span class="page-number current">3</span><a class="page-number" href="/page/4/">4</a><a class="extend next" rel="next" href="/page/4/">__('next') &raquo;</a>
+  </nav>
+</section>
+        
+          <aside id="sidebar">
+  
+    
+
+  
+    
+
+  
+    
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">Archives</h3>
+    <div class="widget">
+      <ul class="archive-list"><li class="archive-list-item"><a class="archive-list-link" href="/archives/2017/01/">January 2017</a></li></ul>
+    </div>
+  </div>
+
+
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">Recent Posts</h3>
+    <div class="widget">
+      <ul>
+        
+          <li>
+            <a href="/2017/01/12/4cb0e039f4e017d4e3e661b1d77e1b48/">(no title)</a>
+          </li>
+        
+          <li>
+            <a href="/2017/01/12/8bfb072940487158c8e60e0dce2e8e31/">(no title)</a>
+          </li>
+        
+          <li>
+            <a href="/2017/01/12/35c26a35a939b610c9591c35c26b7fee/">(no title)</a>
+          </li>
+        
+          <li>
+            <a href="/2017/01/12/36022e1db3604f58a061909408107fdc/">(no title)</a>
+          </li>
+        
+          <li>
+            <a href="/2017/01/12/3e567ee8594e7381ae58a5e6731d3272/">(no title)</a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+
+  
+</aside>
+        
+      </div>
+      <footer id="footer">
+  
+  <div class="outer">
+    <div id="footer-info" class="inner">
+      &copy; 2017 John Doe<br>
+      Powered by <a href="http://hexo.io/" target="_blank">Hexo</a>
+    </div>
+  </div>
+</footer>
+    </div>
+    <nav id="mobile-nav">
+  
+    <a href="/" class="mobile-nav-link">Home</a>
+  
+    <a href="/archives" class="mobile-nav-link">Archives</a>
+  
+</nav>
+    
+
+<script src="//ajax.googleapis.com/ajax/libs/jquery/2.0.3/jquery.min.js"></script>
+
+
+  <link rel="stylesheet" href="/fancybox/jquery.fancybox.css">
+  <script src="/fancybox/jquery.fancybox.pack.js"></script>
+
+
+<script src="/js/script.js"></script>
+
+  </div>
+</body>
+</html>

@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  
+  <title>Hexo</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+  <meta name="description" content="变量Variable介绍：1-局部变量与全局变量
+&amp;lt;h2&amp;gt;1、局部变量（Local Variable）&amp;lt;/h2&amp;gt;
+局部变量也称为内部变量，局部变量在方法内部声明，作用域仅仅限于方法内。有关局部变量有如下几个常用的要点：局部变量在方法内部定义，只有在方法运行时才存在；局部变量没有默认的初始值，因此在使用前需要赋值；换句话说，当每次调用该方法时，局部变量都会被声明且初始化一次；">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Hexo">
+<meta property="og:url" content="http://yoursite.com/2017/01/12/4d20d52eb15b9189fb1bbd7d1b515572/index.html">
+<meta property="og:site_name" content="Hexo">
+<meta property="og:description" content="变量Variable介绍：1-局部变量与全局变量
+&amp;lt;h2&amp;gt;1、局部变量（Local Variable）&amp;lt;/h2&amp;gt;
+局部变量也称为内部变量，局部变量在方法内部声明，作用域仅仅限于方法内。有关局部变量有如下几个常用的要点：局部变量在方法内部定义，只有在方法运行时才存在；局部变量没有默认的初始值，因此在使用前需要赋值；换句话说，当每次调用该方法时，局部变量都会被声明且初始化一次；">
+<meta property="og:image" content="http://yoursite.com/web/20160317220549im_/http://7xow65.com1.z0.glb.clouddn.com/wp-content/uploads/2016/02/QQ20160209-0@2x-300x43.png">
+<meta property="og:updated_time" content="2017-01-12T13:28:59.759Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="Hexo">
+<meta name="twitter:description" content="变量Variable介绍：1-局部变量与全局变量
+&amp;lt;h2&amp;gt;1、局部变量（Local Variable）&amp;lt;/h2&amp;gt;
+局部变量也称为内部变量，局部变量在方法内部声明，作用域仅仅限于方法内。有关局部变量有如下几个常用的要点：局部变量在方法内部定义，只有在方法运行时才存在；局部变量没有默认的初始值，因此在使用前需要赋值；换句话说，当每次调用该方法时，局部变量都会被声明且初始化一次；">
+<meta name="twitter:image" content="http://yoursite.com/web/20160317220549im_/http://7xow65.com1.z0.glb.clouddn.com/wp-content/uploads/2016/02/QQ20160209-0@2x-300x43.png">
+  
+    <link rel="alternate" href="/atom.xml" title="Hexo" type="application/atom+xml">
+  
+  
+    <link rel="icon" href="/favicon.png">
+  
+  
+    <link href="//fonts.googleapis.com/css?family=Source+Code+Pro" rel="stylesheet" type="text/css">
+  
+  <link rel="stylesheet" href="/css/style.css">
+  
+
+</head>
+
+<body>
+  <div id="container">
+    <div id="wrap">
+      <header id="header">
+  <div id="banner"></div>
+  <div id="header-outer" class="outer">
+    <div id="header-title" class="inner">
+      <h1 id="logo-wrap">
+        <a href="/" id="logo">Hexo</a>
+      </h1>
+      
+    </div>
+    <div id="header-inner" class="inner">
+      <nav id="main-nav">
+        <a id="main-nav-toggle" class="nav-icon"></a>
+        
+          <a class="main-nav-link" href="/">Home</a>
+        
+          <a class="main-nav-link" href="/archives">Archives</a>
+        
+      </nav>
+      <nav id="sub-nav">
+        
+          <a id="nav-rss-link" class="nav-icon" href="/atom.xml" title="RSS Feed"></a>
+        
+        <a id="nav-search-btn" class="nav-icon" title="Search"></a>
+      </nav>
+      <div id="search-form-wrap">
+        <form action="//google.com/search" method="get" accept-charset="UTF-8" class="search-form"><input type="search" name="q" results="0" class="search-form-input" placeholder="Search"><button type="submit" class="search-form-submit">&#xF002;</button><input type="hidden" name="sitesearch" value="http://yoursite.com"></form>
+      </div>
+    </div>
+  </div>
+</header>
+      <div class="outer">
+        <section id="main"><article id="post-4d20d52eb15b9189fb1bbd7d1b515572" class="article article-type-post" itemscope itemprop="blogPost">
+  <div class="article-meta">
+    <a href="/2017/01/12/4d20d52eb15b9189fb1bbd7d1b515572/" class="article-date">
+  <time datetime="2017-01-12T13:30:16.097Z" itemprop="datePublished">2017-01-12</time>
+</a>
+    
+  </div>
+  <div class="article-inner">
+    
+    
+    <div class="article-entry" itemprop="articleBody">
+      
+        <p>变量Variable介绍：1-局部变量与全局变量</p>
+<pre><code>&lt;h2&gt;1、局部变量（Local Variable）&lt;/h2&gt;
+</code></pre><p>局部变量也称为内部变量，局部变量在方法内部声明，作用域仅仅限于方法内。有关局部变量有如下几个常用的要点：</p><br><ul><br><li>局部变量在方法内部定义，只有在方法运行时才存在；</li><br><li>局部变量没有默认的初始值，因此在使用前需要赋值；换句话说，当每次调用该方法时，局部变量都会被声明且初始化一次；</li><br><li>在一个方法中，方法中的输入参数也属于局部变量的范畴；</li><br></ul><br><p>例如：定义一个MyClass类，在该类中定义一个printlocalVariable方法，具体实现代码如下：</p><br><ul><br><li>.h文件</li><br></ul><br><pre class="prettyprint linenums">@interface MyClass : NSObject<br><br>-(void) printlocalVariable;<br><br>@end<br></pre><br><ul><br><li>.m文件：定义一个局部变量localVar，并赋初始值0。当方法被调用时，打印当前localVar的值，之后localVar值+1；</li><br></ul><br><pre class="prettyprint linenums">-(void)printlocalVariable{<br>    int localVar = 0;<br>    NSLog(@&#34;localVar value :%d&#34;,localVar);<br>    localVar++;<br><br>}<br></pre><br><ul><br><li>main(）函数中【多次】调用printlocalVariable方法</li><br></ul><br><pre class="prettyprint linenums">#import &lt;Foundation/Foundation.h&gt;<br>#import &#34;MyClass.h&#34;<br><br>int main(int argc, const char <em> argv[]) {<br>    @autoreleasepool {<br>        MyClass </em>myClass = [[MyClass alloc] init];<br><br>        [myClass printlocalVariable];<br>        [myClass printlocalVariable];<br>        [myClass printlocalVariable];<br><br>    }<br>    return 0;<br>}<br><br></pre><br><ul><br><li>打印结果如下。每次调用方法时，localVar都会被重新初始化赋值，因此每次打印值都为0。</li><br></ul><br><p><a href="/web/20160317220549/http://7xow65.com1.z0.glb.clouddn.com/wp-content/uploads/2016/02/QQ20160209-0@2x.png"><img class="alignnone size-medium wp-image-1831" src="/web/20160317220549im_/http://7xow65.com1.z0.glb.clouddn.com/wp-content/uploads/2016/02/QQ20160209-0@2x-300x43.png" alt="QQ20160209-0@2x" width="300" height="43"></a></p><br><h2>2、全局变量(Global Variable)</h2><br><p>全局变量也成为外部变量，它不属于任何一个方法，而是属于一个源程序文件，其作用域是整个程序。</p><br><p>在iOS开发中，全局变量的实现主要有两种实现方式，第一种是使用单例模式实现（非常常用，详解其他课程），第二种是使用关键字extern。</p><br><p>当使用关键字extern定义全局变量时，变量名建议以小写字母g开头，如下所示：</p><br><pre class="prettyprint linenums">extern NSString *gExternString;<br></pre><br><h2> 视频教程</h2><br><div style="width: 640px; " class="wp-video"><!--[if lt IE 9]><script>document.createElement('video');</script><![endif]--><br><video class="wp-video-shortcode" id="video-1830-1" width="640" height="360" preload="metadata" controls="controls"><source type="video/mp4" src="http://7xow58.media1.z0.glb.clouddn.com/41%2F%E5%8F%98%E9%87%8FVariable%E4%BB%8B%E7%BB%8D%EF%BC%9A1-%E5%B1%80%E9%83%A8%E5%8F%98%E9%87%8F%E4%B8%8E%E5%85%A8%E5%B1%80%E5%8F%98%E9%87%8F.mp4?_=1"><a href="/web/20160317220549/http://7xow58.media1.z0.glb.clouddn.com/41%2F%E5%8F%98%E9%87%8FVariable%E4%BB%8B%E7%BB%8D%EF%BC%9A1-%E5%B1%80%E9%83%A8%E5%8F%98%E9%87%8F%E4%B8%8E%E5%85%A8%E5%B1%80%E5%8F%98%E9%87%8F.mp4">http://7xow58.media1.z0.glb.clouddn.com/41%2F%E5%8F%98%E9%87%8FVariable%E4%BB%8B%E7%BB%8D%EF%BC%9A1-%E5%B1%80%E9%83%A8%E5%8F%98%E9%87%8F%E4%B8%8E%E5%85%A8%E5%B1%80%E5%8F%98%E9%87%8F.mp4</a></video></div><br><p>转载请注明：<a href="/web/20160317220549/http://www.hcios.com/">宏创学院</a> » <a href="/web/20160317220549/http://www.hcios.com/archives/1830">变量Variable介绍：1-局部变量与全局变量</a></p>
+
+
+<div class="article-social"><br>            <a href="javascript:;" data-action="ding" data-id="1830" id="Addlike" class="action" target="_blank" rel="external"><i class="fa fa-heart-o"></i>喜欢 (<span class="count">0</span>)</a><span class="or">or</span><span class="action action-share bdsharebuttonbox"><i class="fa fa-share-alt"></i>分享 (<span class="bds_count" data-cmd="count" title="累计分享0次">0</span>)<div class="action-popover"><div class="popover top in"><div class="arrow"></div><div class="popover-content"><a href="#" class="sinaweibo fa fa-weibo" data-cmd="tsina" title="分享到新浪微博"></a><a href="#" class="bds_qzone fa fa-star" data-cmd="qzone" title="分享到QQ空间"></a><a href="#" class="tencentweibo fa fa-tencent-weibo" data-cmd="tqq" title="分享到腾讯微博"></a><a href="#" class="qq fa fa-qq" data-cmd="sqq" title="分享到QQ好友"></a><a href="#" class="bds_renren fa fa-renren" data-cmd="renren" title="分享到人人网"></a><a href="#" class="bds_weixin fa fa-weixin" data-cmd="weixin" title="分享到微信"></a><a href="#" class="bds_more fa fa-ellipsis-h" data-cmd="more"></a></div></div></div></span><br></div>
+
+      
+    </div>
+    <footer class="article-footer">
+      <a data-url="http://yoursite.com/2017/01/12/4d20d52eb15b9189fb1bbd7d1b515572/" data-id="cixuey48q000d02pjoc7zftr8" class="article-share-link">Share</a>
+      
+      
+    </footer>
+  </div>
+  
+    
+<nav id="article-nav">
+  
+    <a href="/2017/01/12/65e7973582ef333c6b83423a654aeff2/" id="article-nav-newer" class="article-nav-link-wrap">
+      <strong class="article-nav-caption">Newer</strong>
+      <div class="article-nav-title">
+        
+          (no title)
+        
+      </div>
+    </a>
+  
+  
+    <a href="/2017/01/12/5c625cd0271d307b703e715542197db5/" id="article-nav-older" class="article-nav-link-wrap">
+      <strong class="article-nav-caption">Older</strong>
+      <div class="article-nav-title"></div>
+    </a>
+  
+</nav>
+
+  
+</article>
+
+</section>
+        
+          <aside id="sidebar">
+  
+    
+
+  
+    
+
+  
+    
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">Archives</h3>
+    <div class="widget">
+      <ul class="archive-list"><li class="archive-list-item"><a class="archive-list-link" href="/archives/2017/01/">January 2017</a></li></ul>
+    </div>
+  </div>
+
+
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">Recent Posts</h3>
+    <div class="widget">
+      <ul>
+        
+          <li>
+            <a href="/2017/01/12/4cb0e039f4e017d4e3e661b1d77e1b48/">(no title)</a>
+          </li>
+        
+          <li>
+            <a href="/2017/01/12/8bfb072940487158c8e60e0dce2e8e31/">(no title)</a>
+          </li>
+        
+          <li>
+            <a href="/2017/01/12/35c26a35a939b610c9591c35c26b7fee/">(no title)</a>
+          </li>
+        
+          <li>
+            <a href="/2017/01/12/36022e1db3604f58a061909408107fdc/">(no title)</a>
+          </li>
+        
+          <li>
+            <a href="/2017/01/12/3e567ee8594e7381ae58a5e6731d3272/">(no title)</a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+
+  
+</aside>
+        
+      </div>
+      <footer id="footer">
+  
+  <div class="outer">
+    <div id="footer-info" class="inner">
+      &copy; 2017 John Doe<br>
+      Powered by <a href="http://hexo.io/" target="_blank">Hexo</a>
+    </div>
+  </div>
+</footer>
+    </div>
+    <nav id="mobile-nav">
+  
+    <a href="/" class="mobile-nav-link">Home</a>
+  
+    <a href="/archives" class="mobile-nav-link">Archives</a>
+  
+</nav>
+    
+
+<script src="//ajax.googleapis.com/ajax/libs/jquery/2.0.3/jquery.min.js"></script>
+
+
+  <link rel="stylesheet" href="/fancybox/jquery.fancybox.css">
+  <script src="/fancybox/jquery.fancybox.pack.js"></script>
+
+
+<script src="/js/script.js"></script>
+
+  </div>
+</body>
+</html>

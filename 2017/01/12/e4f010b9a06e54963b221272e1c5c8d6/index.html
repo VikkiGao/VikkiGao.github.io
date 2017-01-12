@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  
+  <title>Hexo</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+  <meta name="description" content="Objective-C入门(不深不浅，掌握这么多就够了)
+&amp;lt;blockquote&amp;gt;&amp;lt;p&amp;gt;Objective-C语言的学习内容比较广泛，但是对于入门iOS开发来说，只要掌握常用的一些操作即可。宏创学院在此汇总在实际项目开发中必须掌握的OC基础知识点，以馈广大网友。&amp;lt;/p&amp;gt;&amp;lt;/blockquote&amp;gt;
+1、类、对象与方法
+类Class
+
+类(Class)介">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Hexo">
+<meta property="og:url" content="http://yoursite.com/2017/01/12/e4f010b9a06e54963b221272e1c5c8d6/index.html">
+<meta property="og:site_name" content="Hexo">
+<meta property="og:description" content="Objective-C入门(不深不浅，掌握这么多就够了)
+&amp;lt;blockquote&amp;gt;&amp;lt;p&amp;gt;Objective-C语言的学习内容比较广泛，但是对于入门iOS开发来说，只要掌握常用的一些操作即可。宏创学院在此汇总在实际项目开发中必须掌握的OC基础知识点，以馈广大网友。&amp;lt;/p&amp;gt;&amp;lt;/blockquote&amp;gt;
+1、类、对象与方法
+类Class
+
+类(Class)介">
+<meta property="og:updated_time" content="2017-01-12T13:28:59.760Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="Hexo">
+<meta name="twitter:description" content="Objective-C入门(不深不浅，掌握这么多就够了)
+&amp;lt;blockquote&amp;gt;&amp;lt;p&amp;gt;Objective-C语言的学习内容比较广泛，但是对于入门iOS开发来说，只要掌握常用的一些操作即可。宏创学院在此汇总在实际项目开发中必须掌握的OC基础知识点，以馈广大网友。&amp;lt;/p&amp;gt;&amp;lt;/blockquote&amp;gt;
+1、类、对象与方法
+类Class
+
+类(Class)介">
+  
+    <link rel="alternate" href="/atom.xml" title="Hexo" type="application/atom+xml">
+  
+  
+    <link rel="icon" href="/favicon.png">
+  
+  
+    <link href="//fonts.googleapis.com/css?family=Source+Code+Pro" rel="stylesheet" type="text/css">
+  
+  <link rel="stylesheet" href="/css/style.css">
+  
+
+</head>
+
+<body>
+  <div id="container">
+    <div id="wrap">
+      <header id="header">
+  <div id="banner"></div>
+  <div id="header-outer" class="outer">
+    <div id="header-title" class="inner">
+      <h1 id="logo-wrap">
+        <a href="/" id="logo">Hexo</a>
+      </h1>
+      
+    </div>
+    <div id="header-inner" class="inner">
+      <nav id="main-nav">
+        <a id="main-nav-toggle" class="nav-icon"></a>
+        
+          <a class="main-nav-link" href="/">Home</a>
+        
+          <a class="main-nav-link" href="/archives">Archives</a>
+        
+      </nav>
+      <nav id="sub-nav">
+        
+          <a id="nav-rss-link" class="nav-icon" href="/atom.xml" title="RSS Feed"></a>
+        
+        <a id="nav-search-btn" class="nav-icon" title="Search"></a>
+      </nav>
+      <div id="search-form-wrap">
+        <form action="//google.com/search" method="get" accept-charset="UTF-8" class="search-form"><input type="search" name="q" results="0" class="search-form-input" placeholder="Search"><button type="submit" class="search-form-submit">&#xF002;</button><input type="hidden" name="sitesearch" value="http://yoursite.com"></form>
+      </div>
+    </div>
+  </div>
+</header>
+      <div class="outer">
+        <section id="main"><article id="post-e4f010b9a06e54963b221272e1c5c8d6" class="article article-type-post" itemscope itemprop="blogPost">
+  <div class="article-meta">
+    <a href="/2017/01/12/e4f010b9a06e54963b221272e1c5c8d6/" class="article-date">
+  <time datetime="2017-01-12T13:30:16.097Z" itemprop="datePublished">2017-01-12</time>
+</a>
+    
+  </div>
+  <div class="article-inner">
+    
+    
+    <div class="article-entry" itemprop="articleBody">
+      
+        <p>Objective-C入门(不深不浅，掌握这么多就够了)</p>
+<pre><code>&lt;blockquote&gt;&lt;p&gt;Objective-C语言的学习内容比较广泛，但是对于入门iOS开发来说，只要掌握常用的一些操作即可。宏创学院在此汇总在实际项目开发中必须掌握的OC基础知识点，以馈广大网友。&lt;/p&gt;&lt;/blockquote&gt;
+</code></pre><p></p><h2>1、类、对象与方法</h2><p></p>
+<p></p><h3>类Class</h3><p></p>
+<p><ul></ul></p>
+<p><li><a title="类(Class)介绍：1-类的定义" href="/web/20160516005731/http://www.hcios.com/archives/1797" target="_blank">类(Class)介绍：1-类的定义</a></li></p>
+<p><li><a title="类(Class)介绍：2-类的继承" href="/web/20160516005731/http://www.hcios.com/archives/1804" target="_blank">类(Class)介绍：2-类的继承</a></li><br></p>
+<p></p><h3>变量Variable</h3><p></p>
+<p><ul></ul></p>
+<p><li><a title="变量Variable介绍：1-局部变量与全局变量" href="/web/20160516005731/http://www.hcios.com/archives/1830" target="_blank">变量Variable介绍：1-局部变量与全局变量</a></li></p>
+<p><li><a title="变量Variable介绍：2-静态变量static" href="/web/20160516005731/http://www.hcios.com/archives/1833" target="_blank">变量Variable介绍：2-静态变量static</a></li></p>
+<p><li><a title="变量Variable介绍：3-const关键字" href="/web/20160516005731/http://www.hcios.com/archives/1908" target="_blank">变量Variable介绍：3-const关键字</a></li><br></p>
+<p></p><h3>属性Property</h3><p></p>
+<p><ul></ul></p>
+<p><li><a title="属性property介绍：1-属性定义" href="/web/20160516005731/http://www.hcios.com/archives/1846" target="_blank">属性property介绍：1-属性定义</a></li></p>
+<p><li><a title="属性property介绍：2-公共属性与专有属性" href="/web/20160516005731/http://www.hcios.com/archives/1851" target="_blank">属性property介绍：2-公共属性与专有属性</a></li></p>
+<p><li><a title="属性property介绍：3-属性关键字" href="/web/20160516005731/http://www.hcios.com/archives/1854" target="_blank">属性property介绍：3-属性关键字</a></li><br></p>
+<p></p><h3>对象Object</h3><p></p>
+<p><ul></ul></p>
+<p><li><a title="对象Object介绍：1-创建对象" href="/web/20160516005731/http://www.hcios.com/archives/1864" target="_blank">对象Object介绍：1-创建对象</a></li></p>
+<p><li><a title="对象Object介绍：2-对象操作" href="/web/20160516005731/http://www.hcios.com/archives/1874" target="_blank">对象Object介绍：2-对象操作</a></li><br></p>
+<p></p><h3>方法Method</h3><p></p>
+<p><ul></ul></p>
+<p><li><a title="方法Methord介绍：1-方法的定义" href="/web/20160516005731/http://www.hcios.com/archives/1878" target="_blank">方法Method介绍：1-方法的定义</a></li></p>
+<p><li><a title="方法Methord介绍：2-方法的调用" href="/web/20160516005731/http://www.hcios.com/archives/1882" target="_blank">方法Method介绍：2-方法的调用</a></li></p>
+<p><li><a title="方法Methord介绍：3-方法重写override" href="/web/20160516005731/http://www.hcios.com/archives/1884" target="_blank">方法Method介绍：3-方法重写override</a></li><br></p>
+<p></p><h2>2、运算与对象操作</h2><p></p>
+<p><ul></ul></p>
+<p><li><a title="运算与对象操作（一）：数据类型和常量" href="/web/20160516005731/http://www.hcios.com/archives/1765" target="_blank">运算与对象操作（一）：数据类型和常量</a></li></p>
+<p><li><a title="运算与对象操作（二）：算术表达式" href="/web/20160516005731/http://www.hcios.com/archives/1794" target="_blank">运算与对象操作（二）：算术表达式</a></li></p>
+<p><li><a title="运算与对象操作（三） — 循环结构" href="/web/20160516005731/http://www.hcios.com/archives/1904" target="_blank">运算与对象操作（三） — 循环结构</a></li></p>
+<p><li><a title="运算与对象操作（四）— 选择结构" href="/web/20160516005731/http://www.hcios.com/archives/1924" target="_blank">运算与对象操作（四）— 选择结构</a></li><br></p>
+<p></p><h2>3、Foundation框架简介</h2><p></p>
+<p><ul></ul></p>
+<p><li> <a title="Foundation框架（一） — NSString、NSMutableString" href="/web/20160516005731/http://www.hcios.com/archives/1955" target="_blank">Foundation框架（一） — NSString、NSMutableString</a></li></p>
+<p><li><a title="Foundation框架（二） — NSArray、NSMutableArray" href="/web/20160516005731/http://www.hcios.com/archives/2005" target="_blank">Foundation框架（二） — NSArray、NSMutableArray</a></li></p>
+<p><li><a title="Foundation框架（三） — NSDictionary、NSMutableDictionary" href="/web/20160516005731/http://www.hcios.com/archives/2044" target="_blank">Foundation框架（三） — NSDictionary、NSMutableDictionary</a></li></p>
+<p><li><a title="Foundation框架（四） — NSNumber" href="/web/20160516005731/http://www.hcios.com/archives/2106" target="_blank">Foundation框架（四） — NSNumber</a></li></p>
+<p><li><a title="Foundation框架（五） — NSDate" href="/web/20160516005731/http://www.hcios.com/archives/2113" target="_blank">Foundation框架（五） — NSDate</a></li></p>
+<p><li><a title="调试必备 — NSLog" href="/web/20160516005731/http://www.hcios.com/archives/2141" target="_blank">调试必备 — NSLog</a></li><br></p>
+<p></p><h2>4、Objective-C特性</h2><p></p>
+<p></p><h3> 块Block</h3><p></p>
+<p><ul></ul></p>
+<p><li><a title="Block(块)介绍之一：Block简介" href="/web/20160516005731/http://www.hcios.com/archives/1469" target="_blank">Block(块)介绍之一：Block简介</a></li></p>
+<p><li><a title="Block(块)介绍之二：Block的简单使用" href="/web/20160516005731/http://www.hcios.com/archives/1473" target="_blank">Block(块)介绍之二：Block的简单使用</a></li></p>
+<p><li><a title="Block(块)介绍之三：访问Block之外定义的变量" href="/web/20160516005731/http://www.hcios.com/archives/1479" target="_blank">Block(块)介绍之三：访问Block之外定义的变量</a></li></p>
+<p><li><a title="Block(块)介绍之四：回调CallBack" href="/web/20160516005731/http://www.hcios.com/archives/1500" target="_blank">Block(块)介绍之四：回调CallBack</a></li></p>
+<p><li><a title="Block(块)介绍之五：系统框架中的Block" href="/web/20160516005731/http://www.hcios.com/archives/1506" target="_blank">Block(块)介绍之五：系统框架中的Block</a></li><br></p>
+<p></p><h3>协议Protocol</h3><p></p>
+<p><ul></ul></p>
+<p><li><a title="OC基础：协议Protocol" href="/web/20160516005731/http://www.hcios.com/archives/361" target="_blank">OC基础：协议Protocol</a></li><br></p>
+<p></p><h3>分类Category</h3><p></p>
+<p><ul></ul></p>
+<p><li><a title="OC基础知识：分类Category" href="/web/20160516005731/http://www.hcios.com/archives/354" target="_blank">OC基础知识：分类Category</a></li><br></p>
+<p></p><h3>代理Delegate</h3><p></p>
+<p><ul></ul></p>
+<p><li><a title="MVC设计模式：1-代理（delegate）协议" href="/web/20160516005731/http://www.hcios.com/archives/376" target="_blank">MVC设计模式：1-代理（delegate）协议</a></li><br></p>
+<p></p><h2>5、高级知识</h2><p></p>
+<p></p><h3> 对象复制</h3><p></p>
+<p><ul></ul></p>
+<p><li><a title="OC对象复制：1-深复制与浅复制" href="/web/20160516005731/http://www.hcios.com/archives/2018" target="_blank">OC对象复制：1-深复制与浅复制</a></li></p>
+<p><li><a title="OC对象复制：2-可变对象与不可变对象复制" href="/web/20160516005731/http://www.hcios.com/archives/1968" target="_blank">OC对象复制：2-可变对象与不可变对象复制</a></li></p>
+<p><li><a title="OC对象复制：3-自定义对象复制" href="/web/20160516005731/http://www.hcios.com/archives/1982" target="_blank">OC对象复制：3-自定义对象复制</a></li><br></p>
+<p></p><h3>单例Singleton</h3><p></p>
+<p><ul></ul></p>
+<p><li> <a title="单例singleton模式–单例类的实现" href="/web/20160516005731/http://www.hcios.com/archives/2010" target="_blank">单例singleton模式–单例类的实现</a></li><br></p>
+<p></p><h3>MVC设计模式</h3><p></p>
+<p><ul></ul></p>
+<p><li><a title="MVC设计模式：1-代理（delegate）协议" href="/web/20160516005731/http://www.hcios.com/archives/376" target="_blank">MVC设计模式：1-代理（delegate）协议</a></li></p>
+<p><li><a title="MVC设计模式：2-通知（NSNotification）" href="/web/20160516005731/http://www.hcios.com/archives/366" target="_blank">MVC设计模式：2-通知（NSNotification）</a></li></p>
+<p><li><a title="MVC设计模式：3-MVC设计模式" href="/web/20160516005731/http://www.hcios.com/archives/390" target="_blank">MVC设计模式：3-MVC设计模式</a></li><br></p>
+<p></p><h3>KVC/KVO</h3><p></p>
+<p><ul></ul></p>
+<p><li><a title="OC动态特性之 — KVC、KVO" href="/web/20160516005731/http://www.hcios.com/archives/2300" target="_blank">OC动态特性之 — KVC、KVO</a></li><br></p>
+<p></p><h3>预处理</h3><p></p>
+<p><ul></ul></p>
+<p><li><a title="编译器助手 — 预处理指令" href="/web/20160516005731/http://www.hcios.com/archives/2248" target="_blank">编译器助手 — 预处理指令</a></li><br></p>
+<p></p><h3>文件管理</h3><p></p>
+<p><ul></ul></p>
+<p><li><a title="OC基础之 — 文件管理" href="/web/20160516005731/http://www.hcios.com/archives/2460" target="_blank">OC基础之 — 文件管理 </a></li><br></p>
+<p>转载请注明：<a href="/web/20160516005731/http://www.hcios.com/">宏创学院</a> » <a href="/web/20160516005731/http://www.hcios.com/archives/2078">Objective-C入门(不深不浅，掌握这么多就够了)</a></p>
+
+
+<div class="article-social"><br>            <a href="javascript:;" data-action="ding" data-id="2078" id="Addlike" class="action" target="_blank" rel="external"><i class="fa fa-heart-o"></i>喜欢 (<span class="count">6</span>)</a><span class="or">or</span><span class="action action-share bdsharebuttonbox"><i class="fa fa-share-alt"></i>分享 (<span class="bds_count" data-cmd="count" title="累计分享0次">0</span>)<div class="action-popover"><div class="popover top in"><div class="arrow"></div><div class="popover-content"><a href="#" class="sinaweibo fa fa-weibo" data-cmd="tsina" title="分享到新浪微博"></a><a href="#" class="bds_qzone fa fa-star" data-cmd="qzone" title="分享到QQ空间"></a><a href="#" class="tencentweibo fa fa-tencent-weibo" data-cmd="tqq" title="分享到腾讯微博"></a><a href="#" class="qq fa fa-qq" data-cmd="sqq" title="分享到QQ好友"></a><a href="#" class="bds_renren fa fa-renren" data-cmd="renren" title="分享到人人网"></a><a href="#" class="bds_weixin fa fa-weixin" data-cmd="weixin" title="分享到微信"></a><a href="#" class="bds_more fa fa-ellipsis-h" data-cmd="more"></a></div></div></div></span><br></div>
+
+      
+    </div>
+    <footer class="article-footer">
+      <a data-url="http://yoursite.com/2017/01/12/e4f010b9a06e54963b221272e1c5c8d6/" data-id="cixuey49c000p02pj7h46mpdz" class="article-share-link">Share</a>
+      
+      
+    </footer>
+  </div>
+  
+    
+<nav id="article-nav">
+  
+    <a href="/2017/01/12/da61c0f29413d2046410b51772cd617a/" id="article-nav-newer" class="article-nav-link-wrap">
+      <strong class="article-nav-caption">Newer</strong>
+      <div class="article-nav-title">
+        
+          (no title)
+        
+      </div>
+    </a>
+  
+  
+    <a href="/2017/01/12/e56b87a1daa87e9faa6be09fa506da81/" id="article-nav-older" class="article-nav-link-wrap">
+      <strong class="article-nav-caption">Older</strong>
+      <div class="article-nav-title"></div>
+    </a>
+  
+</nav>
+
+  
+</article>
+
+</section>
+        
+          <aside id="sidebar">
+  
+    
+
+  
+    
+
+  
+    
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">Archives</h3>
+    <div class="widget">
+      <ul class="archive-list"><li class="archive-list-item"><a class="archive-list-link" href="/archives/2017/01/">January 2017</a></li></ul>
+    </div>
+  </div>
+
+
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">Recent Posts</h3>
+    <div class="widget">
+      <ul>
+        
+          <li>
+            <a href="/2017/01/12/4cb0e039f4e017d4e3e661b1d77e1b48/">(no title)</a>
+          </li>
+        
+          <li>
+            <a href="/2017/01/12/8bfb072940487158c8e60e0dce2e8e31/">(no title)</a>
+          </li>
+        
+          <li>
+            <a href="/2017/01/12/35c26a35a939b610c9591c35c26b7fee/">(no title)</a>
+          </li>
+        
+          <li>
+            <a href="/2017/01/12/36022e1db3604f58a061909408107fdc/">(no title)</a>
+          </li>
+        
+          <li>
+            <a href="/2017/01/12/3e567ee8594e7381ae58a5e6731d3272/">(no title)</a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+
+  
+</aside>
+        
+      </div>
+      <footer id="footer">
+  
+  <div class="outer">
+    <div id="footer-info" class="inner">
+      &copy; 2017 John Doe<br>
+      Powered by <a href="http://hexo.io/" target="_blank">Hexo</a>
+    </div>
+  </div>
+</footer>
+    </div>
+    <nav id="mobile-nav">
+  
+    <a href="/" class="mobile-nav-link">Home</a>
+  
+    <a href="/archives" class="mobile-nav-link">Archives</a>
+  
+</nav>
+    
+
+<script src="//ajax.googleapis.com/ajax/libs/jquery/2.0.3/jquery.min.js"></script>
+
+
+  <link rel="stylesheet" href="/fancybox/jquery.fancybox.css">
+  <script src="/fancybox/jquery.fancybox.pack.js"></script>
+
+
+<script src="/js/script.js"></script>
+
+  </div>
+</body>
+</html>
